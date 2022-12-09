@@ -6,22 +6,19 @@ from PIL import Image
 from torchvision import models, transforms
 from torch.autograd import Variable
 from torch.nn import functional as F
+import torch
 import numpy as np
 import cv2
 import json
 
-# TO DO
-# 1. update image sizes
-# 2. train model and update model_file path
-# 3. run this to test
-
 # input image
 # LABELS_file = 'imagenet-simple-labels.json'
 image_file = '/home/jupyter/CholecT45/data/VID01/000010.jpg'
-model_file = '/home/jupyter/pdls-final-project/__checkpoint__/*.pth'
+model_file = '/home/jupyter/pdls-final-project/pytorch/__checkpoint__/run_100/tripnet_cholectcholect45-crossval_k1_lowres.pth'
+
 
 # networks such as googlenet, resnet, densenet already use global average pooling at the end, so CAM could be used directly.
-model_id = 1
+model_id = 2
 if model_id == 1:
     net = models.squeezenet1_1(pretrained=True)
     finalconv_name = 'features' # this is the last conv layer of the network
@@ -48,8 +45,8 @@ params = list(net.parameters())
 weight_softmax = np.squeeze(params[-2].data.numpy())
 
 def returnCAM(feature_conv, weight_softmax, class_idx):
-    # generate the class activation maps upsample to 256x256
-    size_upsample = (256, 256) # -------------------------------------------- UPDATE SHAPE OF IMAGE
+    # generate the class activation maps upsample to (480 x 854)
+    size_upsample = (480, 854)
     bz, nc, h, w = feature_conv.shape
     output_cam = []
     for idx in class_idx:
@@ -67,7 +64,7 @@ normalize = transforms.Normalize(
    std=[0.229, 0.224, 0.225]
 )
 preprocess = transforms.Compose([
-   transforms.Resize((224,224)), # -------------------------------------------- UPDATE SHAPE OF IMAGE
+   # transforms.Resize((224,224)), 
    transforms.ToTensor(),
    normalize
 ])

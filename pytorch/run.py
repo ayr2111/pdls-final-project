@@ -481,6 +481,9 @@ if is_test:
     
     # create pandas dataframe of test results to add to aggregated test results csv
     N = len(mAP_i["AP"])
+    print(f"mAP_i[AP]: {mAP_i['AP']}")
+    print(f"len mAP_i[AP]: {len(mAP_i['AP'])}")
+    print(f"shape mAP_i[AP]: {mAP_i['AP'].shape()}")
     test_result_dict = {
         'I'      : mAP_i["AP"],
         'V'      : mAP_v["AP"],
@@ -488,8 +491,8 @@ if is_test:
         'IV'     : mAP_iv["AP"],
         'IT'     : mAP_it["AP"],
         'IVT'    : mAP_ivt["AP"],
-        'Model'  : [basename] * N
-        'Dataset': [dataset_variant] * N
+        'Model'  : [basename] * N,
+        'Dataset': [dataset_variant] * N,
     }
     
     # Create Dataframe
