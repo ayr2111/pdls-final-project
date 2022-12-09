@@ -80,13 +80,25 @@ class Tripnet(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, basename='resnet18', num_tool=6,  num_verb=10, num_target=15, num_triplet=100, hr_output=False):
         super(Encoder, self).__init__()
-        depth = 64 if basename == 'resnet18' else 128
+        if basename == 'resnet18':
+            depth = 64 
+            in_channels = 512
+        elif basename == 'resnet34':
+            depth = 128
+            in_channels = 512
+        elif basename == 'resnet50':
+            depth = 128
+            in_channels = 512
+        elif basename == 'squeezenet0':
+            depth = 128
+            in_channels = 512
         self.basemodel  = BaseModel(basename, hr_output)
-        self.wsl        = WSL(num_tool, depth)
-        self.cagam      = CAG(num_tool, num_verb, num_target)
+        self.wsl        = WSL(num_tool, depth, in_channels)
+        self.cagam      = CAG(num_tool, num_verb, num_target, in_depth=in_channels, out_depth=32)
         
     def forward(self, x):
         high_x, low_x = self.basemodel(x)
+        print(high_x.shape, low_x.shape)
         enc_i         = self.wsl(high_x)
         enc_v, enc_t  = self.cagam(high_x, enc_i[0])
         return enc_i, enc_v, enc_t
@@ -99,7 +111,7 @@ class BaseModel(nn.Module):
         super(BaseModel, self).__init__(*args)
         self.output_feature = {} 
         if basename == 'resnet18':
-            self.basemodel      = basemodels.resnet18(pretrained=True)     
+            self.basemodel      = basemodels.resnet18(pretrained=True)  
             if hr_output: self.increase_resolution()
             self.basemodel.layer1[1].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[1].bn2.register_forward_hook(self.get_activation('high_level_feature'))        
@@ -107,6 +119,18 @@ class BaseModel(nn.Module):
             self.basemodel      = basemodels.resnet50(pretrained=True) 
             self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+        if basename == 'resnet34':
+            self.basemodel      = basemodels.resnet34(pretrained=True) 
+            self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+        if basename == 'squeezenet0':
+            self.basemodel      = basemodels.squeezenet1_1(pretrained=True) 
+            self.basemodel.features[12].expand3x3 =  nn.Conv2d(64, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+            self.basemodel.features[12].expand1x1 =  nn.Conv2d(64, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+            self.basemodel.classifier[1] =  nn.Conv2d(768, 1000, kernel_size=(1, 1), stride=(1, 1))
+            self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
+            print(self.basemodel)
         
     def increase_resolution(self):  
         global OUT_HEIGHT, OUT_WIDTH  
@@ -131,9 +155,9 @@ class BaseModel(nn.Module):
      
 #%% Weakly-Supervised localization
 class WSL(nn.Module):
-    def __init__(self, num_class, depth=64):
+    def __init__(self, num_class, depth=64, in_channels=512):
         super(WSL, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=512, out_channels=depth, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=depth, kernel_size=3, padding=1)
         self.cam   = nn.Conv2d(in_channels=depth, out_channels=num_class, kernel_size=1)
         self.elu   = nn.ELU()
         self.bn    = nn.BatchNorm2d(depth)
