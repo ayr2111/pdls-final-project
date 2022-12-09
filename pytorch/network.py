@@ -92,6 +92,9 @@ class Encoder(nn.Module):
         elif basename == 'squeezenet0':
             depth = 128
             in_channels = 512
+        elif basename == 'efficientnetb0':
+            depth = 128
+            in_channels = 512
         self.basemodel  = BaseModel(basename, hr_output)
         self.wsl        = WSL(num_tool, depth, in_channels)
         self.cagam      = CAG(num_tool, num_verb, num_target, in_depth=in_channels, out_depth=32)
@@ -131,6 +134,15 @@ class BaseModel(nn.Module):
             self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
             print(self.basemodel)
+        if basename == 'efficientnetb0':
+            self.basemodel      = basemodels.efficientnet_b0(pretrained=True) 
+            print(self.basemodel)
+            self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
+            print(self.basemodel)
+            
+
+            
         
     def increase_resolution(self):  
         global OUT_HEIGHT, OUT_WIDTH  

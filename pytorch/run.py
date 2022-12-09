@@ -46,6 +46,7 @@ import platform
 import ivtmetrics # You must "pip install ivtmetrics" to use
 import dataloader
 import numpy as np
+import pandas as pd
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -54,6 +55,7 @@ from torch.utils.data import DataLoader
 parser = argparse.ArgumentParser()
 # model
 parser.add_argument('--model', type=str, default='tripnet', choices=['tripnet'], help='Model name?')
+parser.add_argument('--basename', type=str, default='resnet18', choices=['resnet18', 'resnet34', 'resnet50', 'squeezenet0', 'efficientnetb0'], help='Feature Extractor Network')
 parser.add_argument('--version', type=int, default=0,  help='Model version control (for keeping several versions)') 
 parser.add_argument('--hr_output', action='store_true', help='Whether to use higher resolution output (32x56) or not (8x14). Default: False')
 # job
@@ -62,6 +64,7 @@ parser.add_argument('-e', '--test',  action='store_true', help='to test')
 parser.add_argument('--val_interval', type=int, default=1,  help='(for hp tuning). Epoch interval to evaluate on validation data. set -1 for only after final epoch, or a number higher than the total epochs to not validate.')
 # data
 parser.add_argument('--data_dir', type=str, default='/path/to/dataset', help='path to dataset?')
+parser.add_argument('--csv_file', type=str, default='/path/to/csv_results', help='where to save csv with results?')
 parser.add_argument('--dataset_variant', type=str, default='cholect45-crossval', choices=['cholect50', 'cholect45', 'cholect50-challenge', 'cholect50-crossval', 'cholect45-crossval'], help='Variant of the dataset to use')
 parser.add_argument('-k', '--kfold', type=int, default=1,  choices=[1,2,3,4,5,], help='The test split in k-fold cross-validation')
 parser.add_argument('--image_width', type=int, default=448, help='Image width ')  
@@ -91,6 +94,8 @@ FLAGS, unparsed = parser.parse_known_args()
 
 
 #%% @params definitions
+basename        = FLAGS.basename
+csv_file        = FLAGS.csv_file
 is_train        = FLAGS.train
 is_test         = FLAGS.test
 dataset_variant = FLAGS.dataset_variant
@@ -337,7 +342,7 @@ target_weight   = [0.49752894, 0.52041527, 0.49752894, 0.51394739, 2.71899565, 1
 
 
 #%% model
-model = network.Tripnet('squeezenet0', hr_output=hr_output).cuda()
+model = network.Tripnet(basename, hr_output=hr_output).cuda()
 pytorch_total_params = sum(p.numel() for p in model.parameters())
 pytorch_train_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print("Model built ...")
@@ -473,6 +478,33 @@ if is_test:
     print(f':::::: : {mAP_i["mAP"]:.4f} | {mAP_v["mAP"]:.4f} | {mAP_t["mAP"]:.4f} | {mAP_iv["mAP"]:.4f} | {mAP_it["mAP"]:.4f} | {mAP_ivt["mAP"]:.4f} ', file=open(logfile, 'a+'))
     print('='*50, file=open(logfile, 'a+'))
     print("Test results saved @ ", logfile)
+    
+    # create pandas dataframe of test results to add to aggregated test results csv
+    N = len(mAP_i["AP"])
+    test_result_dict = {
+        'I'      : mAP_i["AP"],
+        'V'      : mAP_v["AP"],
+        'T'      : mAP_t["AP"],
+        'IV'     : mAP_iv["AP"],
+        'IT'     : mAP_it["AP"],
+        'IVT'    : mAP_ivt["AP"],
+        'Model'  : [basename] * N
+        'Dataset': [dataset_variant] * N
+    }
+    
+    # Create Dataframe
+    df_current_test = pd.DataFrame(test_result_dict)
+    
+    # append current test results to csv file if it exists
+    try:
+        df_previous_tests = pd.read_csv(csv_file, index_col=0)
+        df_new = pd.concat((df_previous_tests, df_current_test), ignore_index=True)
+    except FileNotFoundError: 
+        print(f'CSV File {csv_file} Not Found. Creating new file')
+        df_new = df_current_test
+        
+    # save csv file and overwrite old file with new file if it exists
+    df_new.to_csv(csv_file)
 
 #%% End
 print("All done!\nShutting done...\nIt is what it is ...\nC'est finis! {}".format("-"*maxlen) , file=open(logfile, 'a+'))
