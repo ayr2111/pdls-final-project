@@ -337,7 +337,7 @@ target_weight   = [0.49752894, 0.52041527, 0.49752894, 0.51394739, 2.71899565, 1
 
 
 #%% model
-model = network.Tripnet('resnet18', hr_output=hr_output).cuda()
+model = network.Tripnet('squeezenet0', hr_output=hr_output).cuda()
 pytorch_total_params = sum(p.numel() for p in model.parameters())
 pytorch_train_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print("Model built ...")
