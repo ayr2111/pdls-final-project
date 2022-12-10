@@ -37,6 +37,7 @@ Copyright 2021 The Research Group CAMMA Authors All Rights Reserved.
 #%% import libraries
 import os
 import sys
+import cv2
 import time
 import torch
 import random
@@ -147,7 +148,7 @@ print("Configuring network ...")
 def assign_gpu(gpu=None):  
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu) 
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1' 
-    
+
 
 def get_weight_balancing(case='cholect50'):
     # 50:   cholecT50, data splits as used in rendezvous paper
@@ -224,6 +225,25 @@ def get_weight_balancing(case='cholect50'):
     }
     return switcher.get(case)
      
+    
+def returnCAM(feature_conv, weight_softmax, class_idx, img_shape):
+    # generate the class activation maps upsample to (480 x 854)
+    size_upsample = img_shape
+    bz, nc, h, w = feature_conv.shape
+    print(f" feature_conv.shape: { feature_conv.shape}")
+    print(f" weight_softmax.shape: { weight_softmax.shape}")
+    print(f" class_idx.shape: { class_idx}")
+    output_cam = []
+    for idx in class_idx:
+        cam = weight_softmax.dot(feature_conv.reshape((nc, h*w)))
+        cam = cam.reshape(h, w)
+        cam = cam - np.min(cam)
+        cam_img = cam / np.max(cam)
+        cam_img = np.uint8(255 * cam_img)
+        output_cam.append(cv2.resize(cam_img, size_upsample))
+    return output_cam
+
+
 
 def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, loss_fn_ivt, optimizers, scheduler, epoch):
     start = time.time() 
@@ -232,6 +252,29 @@ def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, l
         model.train()        
         tool, verb, target, triplet = model(img)
         cam_i, logit_i  = tool
+        
+        
+        # TEST ONLY
+        CAMs = returnCAM(
+            torch.unsqueeze(cam_i[0,:,:,:], dim=0).detach().cpu().numpy(), 
+            torch.squeeze(logit_i[0,:]).detach().cpu().numpy(), 
+            [np.where(torch.unsqueeze(y1[0,:], dim=0).detach().cpu().numpy())[0]],
+            (img.shape[2], img.shape[3]),
+        )
+        # render the CAM and output
+        PIL_image = img[0,:,:,:].detach().cpu().numpy()
+        PIL_image = np.moveaxis(PIL_image, 0, -1)
+        opencvImage = cv2.cvtColor(PIL_image, cv2.COLOR_RGB2BGR)
+        height, width, _ = opencvImage.shape
+        heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
+        result = heatmap * 0.3 + opencvImage * 0.5
+        cv2.imwrite('/home/jupyter/CAM.jpg', result)
+        cv2.imwrite('/home/jupyter/heatmap.jpg', heatmap)
+        cv2.imwrite('/home/jupyter/opencvImage.jpg', opencvImage)
+        sys.exit()
+        
+        
+        
         cam_v, logit_v  = verb
         cam_t, logit_t  = target
         logit_ivt       = triplet                
@@ -478,25 +521,19 @@ if is_test:
     print(f':::::: : {mAP_i["mAP"]:.4f} | {mAP_v["mAP"]:.4f} | {mAP_t["mAP"]:.4f} | {mAP_iv["mAP"]:.4f} | {mAP_it["mAP"]:.4f} | {mAP_ivt["mAP"]:.4f} ', file=open(logfile, 'a+'))
     print('='*50, file=open(logfile, 'a+'))
     print("Test results saved @ ", logfile)
+        
+    # Setup structure to save metris as csv
+    test_dict = {}
+    metrics_list = [mAP_i["AP"], mAP_v["AP"], mAP_t["AP"], mAP_iv["AP"], mAP_it["AP"], mAP_ivt["AP"]]
+    metrics_name = ['I', 'V ', 'T', 'IV', 'IT', 'IVT']
     
-    # create pandas dataframe of test results to add to aggregated test results csv
-    N = len(mAP_i["AP"])
-    print(f"mAP_i[AP]: {mAP_i['AP']}")
-    print(f"len mAP_i[AP]: {len(mAP_i['AP'])}")
-    print(f"shape mAP_i[AP]: {mAP_i['AP'].shape()}")
-    test_result_dict = {
-        'I'      : mAP_i["AP"],
-        'V'      : mAP_v["AP"],
-        'T'      : mAP_t["AP"],
-        'IV'     : mAP_iv["AP"],
-        'IT'     : mAP_it["AP"],
-        'IVT'    : mAP_ivt["AP"],
-        'Model'  : [basename] * N,
-        'Dataset': [dataset_variant] * N,
-    }
-    
-    # Create Dataframe
-    df_current_test = pd.DataFrame(test_result_dict)
+    for (metric, metric_str) in zip(metrics_list, metrics_name):
+        for ivt_count, ivt in enumerate(metric):
+            test_dict[metric_str + str(ivt_count)] = [ivt]
+
+    test_dict['Model'] = [basename]
+    test_dict['Dataset'] = [dataset_variant]
+    df_current_test = pd.DataFrame(test_dict)
     
     # append current test results to csv file if it exists
     try:
