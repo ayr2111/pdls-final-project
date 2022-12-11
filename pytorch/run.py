@@ -230,9 +230,11 @@ def returnCAM(feature_conv, weight_softmax, class_idx, img_shape):
     # generate the class activation maps upsample to (480 x 854)
     size_upsample = img_shape
     bz, nc, h, w = feature_conv.shape
-    print(f" feature_conv.shape: { feature_conv.shape}")
-    print(f" weight_softmax.shape: { weight_softmax.shape}")
-    print(f" class_idx.shape: { class_idx}")
+    print(f"feature_conv: { feature_conv.shape}")
+    print(f"weight_softmax: { weight_softmax.shape}\n{weight_softmax}")
+    print(f"class_idx: { class_idx}")
+    print(f"img_shape: {img_shape}")
+    print()
     output_cam = []
     for idx in class_idx:
         cam = weight_softmax.dot(feature_conv.reshape((nc, h*w)))
@@ -247,31 +249,37 @@ def returnCAM(feature_conv, weight_softmax, class_idx, img_shape):
 
 def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, loss_fn_ivt, optimizers, scheduler, epoch):
     start = time.time() 
+    xxx = False
     for batch, (img, (y1, y2, y3, y4)) in enumerate(dataloader):
         img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()        
         model.train()        
         tool, verb, target, triplet = model(img)
         cam_i, logit_i  = tool
         
+        print(f'cam_i: {cam_i.shape}')
+        print(f'logit_i: {logit_i.shape}')
+        print(f'y1: {y1.shape}')
         
-        # TEST ONLY
-        CAMs = returnCAM(
-            torch.unsqueeze(cam_i[0,:,:,:], dim=0).detach().cpu().numpy(), 
-            torch.squeeze(logit_i[0,:]).detach().cpu().numpy(), 
-            [np.where(torch.unsqueeze(y1[0,:], dim=0).detach().cpu().numpy())[0]],
-            (img.shape[2], img.shape[3]),
-        )
-        # render the CAM and output
-        PIL_image = img[0,:,:,:].detach().cpu().numpy()
-        PIL_image = np.moveaxis(PIL_image, 0, -1)
-        opencvImage = cv2.cvtColor(PIL_image, cv2.COLOR_RGB2BGR)
-        height, width, _ = opencvImage.shape
-        heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
-        result = heatmap * 0.3 + opencvImage * 0.5
-        cv2.imwrite('/home/jupyter/CAM.jpg', result)
-        cv2.imwrite('/home/jupyter/heatmap.jpg', heatmap)
-        cv2.imwrite('/home/jupyter/opencvImage.jpg', opencvImage)
-        sys.exit()
+        if xxx is False:
+            # TEST ONLY
+            CAMs = returnCAM(
+                torch.unsqueeze(cam_i[0,:,:,:], dim=0).detach().cpu().numpy(), 
+                torch.squeeze(logit_i[0,:]).detach().cpu().numpy(), 
+                [np.where(torch.unsqueeze(y1[0,:], dim=0).detach().cpu().numpy())[0]],
+                (img.shape[2], img.shape[3]),
+            )
+            # render the CAM and output
+            PIL_image = img[0,:,:,:].detach().cpu().numpy()
+            PIL_image = np.moveaxis(PIL_image, 0, -1)
+            opencvImage = cv2.cvtColor(PIL_image, cv2.COLOR_RGB2BGR)
+            height, width, _ = opencvImage.shape
+            heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
+            result = heatmap * 0.3 + opencvImage * 0.5
+            cv2.imwrite('/home/jupyter/CAM.jpg', result)
+            cv2.imwrite('/home/jupyter/heatmap.jpg', heatmap)
+            cv2.imwrite('/home/jupyter/opencvImage.jpg', opencvImage)
+            xxx = True
+
         
         
         
@@ -305,6 +313,7 @@ def test_loop(dataloader, model, activation, final_eval=False):
         mAPi.reset() 
     with torch.no_grad():
         for batch, (img, (y1, y2, y3, y4)) in enumerate(dataloader):
+            sample_idx = np.arange(batch_size * batch, batch_size * (batch+1), 1)
             img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()            
             model.eval()  
             tool, verb, target, triplet = model(img)
@@ -315,7 +324,49 @@ def test_loop(dataloader, model, activation, final_eval=False):
                 mAPi.update(y1.float().detach().cpu(), activation(logit_i).detach().cpu()) # Log metrics 
                 mAPv.update(y2.float().detach().cpu(), activation(logit_v).detach().cpu()) # Log metrics 
                 mAPt.update(y3.float().detach().cpu(), activation(logit_t).detach().cpu()) # Log metrics 
-            mAP.update(y4.float().detach().cpu(), activation(triplet).detach().cpu()) # Log metrics 
+                
+                # Generate CAM for each I, V, T for sample 300
+                show_idx = 1000
+                if np.any(sample_idx==show_idx):
+                    idx = np.where(sample_idx==show_idx)[0][0]
+                    print(f'idx: {idx}')
+                    
+                    # Iterate through instrument, verb, tissue structures
+                    for (ivt_str, cam_, logit_, y_) in zip(['i','t'], [cam_i, cam_t], [logit_i, logit_t], [y1, y3]):
+        
+                        
+                        print(f'\n\nTest Index {idx}, IVT: {ivt_str}')
+                        print(f'cam_: {cam_.shape}')
+                        print(f'logit_: {logit_.shape}')
+                        print(f'y_: {y_.shape}')
+                        
+                        # Generate CAM
+                        CAMs = returnCAM(
+                            torch.unsqueeze(cam_[idx,:,:,:], dim=0).detach().cpu().numpy(), 
+                            torch.squeeze(logit_[idx,:]).detach().cpu().numpy(), 
+                            [np.where(torch.unsqueeze(y_[idx,:], dim=0).detach().cpu().numpy())[0]],
+                            (img.shape[2], img.shape[3]),
+                        )
+
+                        # Render the CAM and output
+                        PIL_image = img[idx,:,:,:].detach().cpu().numpy()
+                        PIL_image = np.moveaxis(PIL_image, 0, -1)
+                        opencvImage = PIL_image[:, :, ::-1].copy() # Convert RGB to BGR 
+                        height, width, _ = opencvImage.shape
+                        heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
+                        
+#                         print(f'img: {img.shape}')
+#                         print(f'PIL_image: {PIL_image.shape}')
+#                         print(f'opencvImage: {opencvImage.shape}')
+#                         print(f'height, width: {height, width}')
+#                         print(f'CAMs[0]: {CAMs[0].shape}')
+                        
+                        result = heatmap * 0.3 + opencvImage * 0.5
+                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_cam.jpg', result)
+                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_heatmap.jpg', heatmap)
+                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_image.jpg', opencvImage)
+                
+            mAP.update(y4.float().detach().cpu(), activation(triplet).detach().cpu()) # Log metrics     
     mAP.video_end() 
     if final_eval and not set_chlg_eval:
         mAPv.video_end()
