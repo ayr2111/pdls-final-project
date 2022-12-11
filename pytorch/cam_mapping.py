@@ -80,7 +80,7 @@ logit = net(img_variable)
 #     classes = json.load(f)
 
 
-h_x = F.softmax(logit, dim=1).data.squeeze()
+h_x = F.softmax(logit, dim=1).data.squeeze() # Get class probabilities
 probs, idx = h_x.sort(0, True)
 probs = probs.numpy()
 idx = idx.numpy()
