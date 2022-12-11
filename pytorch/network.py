@@ -114,20 +114,20 @@ class BaseModel(nn.Module):
         super(BaseModel, self).__init__(*args)
         self.output_feature = {} 
         if basename == 'resnet18':
-            self.basemodel      = basemodels.resnet18(pretrained=True)  
+            self.basemodel      = basemodels.resnet18(weights='DEFAULT')  
             if hr_output: self.increase_resolution()
             self.basemodel.layer1[1].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[1].bn2.register_forward_hook(self.get_activation('high_level_feature'))        
         if basename == 'resnet50':
-            self.basemodel      = basemodels.resnet50(pretrained=True) 
+            self.basemodel      = basemodels.resnet50(weights='DEFAULT') 
             self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
         if basename == 'resnet34':
-            self.basemodel      = basemodels.resnet34(pretrained=True) 
+            self.basemodel      = basemodels.resnet34(weights='DEFAULT') 
             self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
         if basename == 'squeezenet0':
-            self.basemodel      = basemodels.squeezenet1_1(pretrained=True) 
+            self.basemodel      = basemodels.squeezenet1_1(weights='DEFAULT') 
             self.basemodel.features[12].expand3x3 =  nn.Conv2d(64, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
             self.basemodel.features[12].expand1x1 =  nn.Conv2d(64, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
             self.basemodel.classifier[1] =  nn.Conv2d(768, 1000, kernel_size=(1, 1), stride=(1, 1))
@@ -135,7 +135,7 @@ class BaseModel(nn.Module):
             self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
             print(self.basemodel)
         if basename == 'efficientnetb0':
-            self.basemodel      = basemodels.efficientnet_b0(pretrained=True) 
+            self.basemodel      = basemodels.efficientnet_b0(weights='DEFAULT') 
             print(self.basemodel)
             self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
