@@ -49,6 +49,8 @@ import dataloader
 import numpy as np
 import pandas as pd
 from torch import nn
+from PIL import Image
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 
@@ -56,7 +58,7 @@ from torch.utils.data import DataLoader
 parser = argparse.ArgumentParser()
 # model
 parser.add_argument('--model', type=str, default='tripnet', choices=['tripnet'], help='Model name?')
-parser.add_argument('--basename', type=str, default='resnet18', choices=['resnet18', 'resnet34', 'resnet50', 'squeezenet0', 'efficientnetb0'], help='Feature Extractor Network')
+parser.add_argument('--basename', type=str, default='resnet18', choices=['resnet18', 'resnet34', 'resnet50', 'resnet101', 'squeezenet0', 'shufflenet05', 'shufflenet10', 'shufflenet15', 'shufflenet20'], help='Feature Extractor Network')
 parser.add_argument('--version', type=int, default=0,  help='Model version control (for keeping several versions)') 
 parser.add_argument('--hr_output', action='store_true', help='Whether to use higher resolution output (32x56) or not (8x14). Default: False')
 # job
@@ -144,6 +146,48 @@ iterable_augmentations  = []
 print("Configuring network ...")
 
 
+# Class Dictionaries
+class_dict_instrument = {
+    '0':'grasper',
+    '1':'bipolar',
+    '2':'hook',
+    '3':'scissors',
+    '4':'clipper',
+    '5':'irrigator',
+    '-1':'null_instrument',
+}
+
+class_dict_verb = {
+    '0':'grasp',
+    '1':'retract',
+    '2':'dissect',
+    '3':'coagulate',
+    '4':'clip',
+    '5':'cut',
+    '6':'aspirate',
+    '7':'irrigate',
+    '8':'pack',
+    '9':'null_verb',
+}
+
+class_dict_tissue = {
+    '0':'gallbladder',
+    '1':'cystic_plate',
+    '2':'cystic_duct',
+    '3':'cystic_artery',
+    '4':'cystic_pedicle',
+    '5':'blood_vessel',
+    '6':'fluid',
+    '7':'abdominal_wall_cavity',
+    '8':'liver',
+    '9':'adhesion',
+    '10':'omentum',
+    '11':'peritoneum',
+    '12':'gut',
+    '13':'specimen_bag',
+    '14':'null_target',
+}
+
 #%% @functions (helpers)
 def assign_gpu(gpu=None):  
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu) 
@@ -226,63 +270,60 @@ def get_weight_balancing(case='cholect50'):
     return switcher.get(case)
      
     
-def returnCAM(feature_conv, weight_softmax, class_idx, img_shape):
+def save_cam_figure(feature_conv, h_logit, y, image, img_file, img_index, obj_str, class_dict):
+    if image.shape[2] != 3:
+        sys.exit(f'Expected 3 Image Channels, got {image.shape[2]} instead.')
+    # Size Check
+    if feature_conv.shape[0] > h_logit.shape[1]:
+        feature_conv = feature_conv[:h_logit.shape[1], :, :]
+    
+    # Calculate Class Prediction
+    idx = np.argsort(h_logit.squeeze())[0]
+    class_prediction = class_dict[str(idx)]
+    
     # generate the class activation maps upsample to (480 x 854)
-    size_upsample = img_shape
-    bz, nc, h, w = feature_conv.shape
-    print(f"feature_conv: { feature_conv.shape}")
-    print(f"weight_softmax: { weight_softmax.shape}\n{weight_softmax}")
-    print(f"class_idx: { class_idx}")
-    print(f"img_shape: {img_shape}")
-    print()
-    output_cam = []
-    for idx in class_idx:
-        cam = weight_softmax.dot(feature_conv.reshape((nc, h*w)))
-        cam = cam.reshape(h, w)
-        cam = cam - np.min(cam)
-        cam_img = cam / np.max(cam)
-        cam_img = np.uint8(255 * cam_img)
-        output_cam.append(cv2.resize(cam_img, size_upsample))
-    return output_cam
-
-
+    size_upsample = (image.shape[0], image.shape[1])
+    nc, h, w = feature_conv.shape
+    
+    # Get CAM via Softmax Probabilities
+    cam = h_logit.dot(feature_conv.reshape((nc, h*w))) # (1 x 6) dot (6 x 8*14) = (1 x 8*14)
+    cam = cam.reshape(h, w)
+    cam = cam - np.min(cam)
+    cam_img = cam / np.max(cam)
+    cam_img = np.uint8(255 * cam_img)
+    output_cam = cv2.resize(cam_img, size_upsample)
+    
+    # Load Image via OpenCV
+    opencv_image = cv2.imread(img_file)
+    height, width, _ = opencv_image.shape
+    heatmap = cv2.applyColorMap(cv2.resize(output_cam,(width, height)), cv2.COLORMAP_JET)
+    result = heatmap * 0.3 + opencv_image * 0.5
+    
+    # Annotations
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_size = 1.1
+    font_thickness = 2
+    x,y = 10,470
+    video_str = img_file[img_file.find('VID'):img_file.find('VID')+5]
+    
+    # Setup Folder if not created
+    if not os.path.exists(f'/home/jupyter/CAM/{basename}/{video_str}'):
+        os.mkdir(f'/home/jupyter/CAM/{basename}/{video_str}')
+        
+    # Save Images
+    for (image_ins, title_str) in zip([heatmap, opencv_image, result], ['cam','input','overlay']):
+        img_titled = cv2.putText(image_ins, f'{video_str}_{img_index}_{obj_str}', (x,y), font, font_size, (0,0,0), font_thickness, cv2.LINE_AA)
+        cv2.imwrite(f'/home/jupyter/CAM/{basename}/{video_str}/{img_index:06d}_{obj_str}_{title_str}.png', img_titled)
+    
 
 def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, loss_fn_ivt, optimizers, scheduler, epoch):
     start = time.time() 
     xxx = False
-    for batch, (img, (y1, y2, y3, y4)) in enumerate(dataloader):
-        img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()        
+    for batch, (img, (y1, y2, y3, y4), img_pth, img_idx) in enumerate(dataloader):
+        img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()
         model.train()        
         tool, verb, target, triplet = model(img)
         cam_i, logit_i  = tool
-        
-        print(f'cam_i: {cam_i.shape}')
-        print(f'logit_i: {logit_i.shape}')
-        print(f'y1: {y1.shape}')
-        
-        if xxx is False:
-            # TEST ONLY
-            CAMs = returnCAM(
-                torch.unsqueeze(cam_i[0,:,:,:], dim=0).detach().cpu().numpy(), 
-                torch.squeeze(logit_i[0,:]).detach().cpu().numpy(), 
-                [np.where(torch.unsqueeze(y1[0,:], dim=0).detach().cpu().numpy())[0]],
-                (img.shape[2], img.shape[3]),
-            )
-            # render the CAM and output
-            PIL_image = img[0,:,:,:].detach().cpu().numpy()
-            PIL_image = np.moveaxis(PIL_image, 0, -1)
-            opencvImage = cv2.cvtColor(PIL_image, cv2.COLOR_RGB2BGR)
-            height, width, _ = opencvImage.shape
-            heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
-            result = heatmap * 0.3 + opencvImage * 0.5
-            cv2.imwrite('/home/jupyter/CAM.jpg', result)
-            cv2.imwrite('/home/jupyter/heatmap.jpg', heatmap)
-            cv2.imwrite('/home/jupyter/opencvImage.jpg', opencvImage)
-            xxx = True
-
-        
-        
-        
         cam_v, logit_v  = verb
         cam_t, logit_t  = target
         logit_ivt       = triplet                
@@ -290,7 +331,7 @@ def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, l
         loss_v          = loss_fn_v(logit_v, y2.float())
         loss_t          = loss_fn_t(logit_t, y3.float())
         loss_ivt        = loss_fn_ivt(logit_ivt, y4.float())  
-        loss            = (loss_i) + (loss_v) + (loss_t) + loss_ivt 
+        loss            = (loss_i) + (loss_v) + (loss_t) + loss_ivt         
         # Backpropagation # optimizer.zero_grad()
         for param in model.parameters():
             param.grad = None
@@ -312,8 +353,7 @@ def test_loop(dataloader, model, activation, final_eval=False):
         mAPt.reset() 
         mAPi.reset() 
     with torch.no_grad():
-        for batch, (img, (y1, y2, y3, y4)) in enumerate(dataloader):
-            sample_idx = np.arange(batch_size * batch, batch_size * (batch+1), 1)
+        for batch, (img, (y1, y2, y3, y4), img_pth, img_idx) in enumerate(dataloader):
             img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()            
             model.eval()  
             tool, verb, target, triplet = model(img)
@@ -326,45 +366,29 @@ def test_loop(dataloader, model, activation, final_eval=False):
                 mAPt.update(y3.float().detach().cpu(), activation(logit_t).detach().cpu()) # Log metrics 
                 
                 # Generate CAM for each I, V, T for sample 300
-                show_idx = 1000
-                if np.any(sample_idx==show_idx):
-                    idx = np.where(sample_idx==show_idx)[0][0]
-                    print(f'idx: {idx}')
+                idxs = np.where((img_idx >= 300) & (img_idx <= 302))[0]
+                if len(idxs) > 0:
                     
-                    # Iterate through instrument, verb, tissue structures
-                    for (ivt_str, cam_, logit_, y_) in zip(['i','t'], [cam_i, cam_t], [logit_i, logit_t], [y1, y3]):
-        
+                    # Show Results of Images in set
+                    for idx in idxs: 
                         
-                        print(f'\n\nTest Index {idx}, IVT: {ivt_str}')
-                        print(f'cam_: {cam_.shape}')
-                        print(f'logit_: {logit_.shape}')
-                        print(f'y_: {y_.shape}')
-                        
-                        # Generate CAM
-                        CAMs = returnCAM(
-                            torch.unsqueeze(cam_[idx,:,:,:], dim=0).detach().cpu().numpy(), 
-                            torch.squeeze(logit_[idx,:]).detach().cpu().numpy(), 
-                            [np.where(torch.unsqueeze(y_[idx,:], dim=0).detach().cpu().numpy())[0]],
-                            (img.shape[2], img.shape[3]),
-                        )
+                        # Iterate through instrument, verb, tissue structures
+                        for (ivt_str, cam_, logit_, y_) in zip(['instrument','verb','tissue'], [cam_i, cam_v, cam_t], [logit_i, logit_v, logit_t], [y1, y2, y3]):
 
-                        # Render the CAM and output
-                        PIL_image = img[idx,:,:,:].detach().cpu().numpy()
-                        PIL_image = np.moveaxis(PIL_image, 0, -1)
-                        opencvImage = PIL_image[:, :, ::-1].copy() # Convert RGB to BGR 
-                        height, width, _ = opencvImage.shape
-                        heatmap = cv2.applyColorMap(cv2.resize(CAMs[0],(width, height)), cv2.COLORMAP_JET)
-                        
-#                         print(f'img: {img.shape}')
-#                         print(f'PIL_image: {PIL_image.shape}')
-#                         print(f'opencvImage: {opencvImage.shape}')
-#                         print(f'height, width: {height, width}')
-#                         print(f'CAMs[0]: {CAMs[0].shape}')
-                        
-                        result = heatmap * 0.3 + opencvImage * 0.5
-                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_cam.jpg', result)
-                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_heatmap.jpg', heatmap)
-                        cv2.imwrite(f'/home/jupyter/{show_idx}_{ivt_str}_image.jpg', opencvImage)
+                            # Make probability vector
+                            h_logit = F.softmax(logit_[idx,:].view(1,-1), dim=1)
+                            
+                            # Generate CAM images
+                            save_cam_figure(
+                                feature_conv=cam_[idx,:,:,:].detach().cpu().numpy(), 
+                                h_logit=h_logit.detach().cpu().numpy().reshape(1,-1),
+                                y=y_[idx,:].detach().cpu().numpy(), 
+                                image=np.moveaxis(img[idx,:,:,:].detach().cpu().numpy(), 0, -1).astype('float'),
+                                img_file=img_pth[idx],                 
+                                img_index=img_idx[idx],
+                                obj_str=ivt_str,
+                                class_dict=class_dict_tissue,
+                            )
                 
             mAP.update(y4.float().detach().cpu(), activation(triplet).detach().cpu()) # Log metrics     
     mAP.video_end() 
@@ -394,6 +418,11 @@ torch.autograd.profiler.profile(False)
 torch.autograd.profiler.emit_nvtx(False)
 # torch.set_deterministic(True)
 
+#%% Make Directories
+if not os.path.exists(f'/home/jupyter/CAM'):
+    os.mkdir(f'/home/jupyter/CAM')
+if not os.path.exists(f'/home/jupyter/CAM/{basename}'):
+    os.mkdir(f'/home/jupyter/CAM/{basename}')
 
 #%% data loading : variant and split selection (Note: original paper used different augumentation per epoch)
 dataset = dataloader.CholecT50( 
@@ -493,7 +522,7 @@ optimizers      = [optimizer_i, optimizer_vt, optimizer_ivt]
 
 
 #%% checkpoints/weights
-if os.path.exists(ckpt_path):
+if False: #os.path.exists(ckpt_path):
     model.load_state_dict(torch.load(ckpt_path))
     resume_ckpt = ckpt_path
 elif os.path.exists(pretrain_dir):
