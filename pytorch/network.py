@@ -95,13 +95,17 @@ class Encoder(nn.Module):
         elif basename == 'efficientnetb0':
             depth = 128
             in_channels = 512
+        else:
+            depth = 128
+            in_channels = 512
         self.basemodel  = BaseModel(basename, hr_output)
         self.wsl        = WSL(num_tool, depth, in_channels)
         self.cagam      = CAG(num_tool, num_verb, num_target, in_depth=in_channels, out_depth=32)
         
     def forward(self, x):
+        print(f'x: {x.shape}')
         high_x, low_x = self.basemodel(x)
-        print(high_x.shape, low_x.shape)
+        print(f'high_x: {high_x.shape}')
         enc_i         = self.wsl(high_x)
         enc_v, enc_t  = self.cagam(high_x, enc_i[0])
         return enc_i, enc_v, enc_t
@@ -113,19 +117,28 @@ class BaseModel(nn.Module):
     def __init__(self, basename='resnet18', hr_output=False, *args):
         super(BaseModel, self).__init__(*args)
         self.output_feature = {} 
+        
         if basename == 'resnet18':
             self.basemodel      = basemodels.resnet18(weights='DEFAULT')  
             if hr_output: self.increase_resolution()
             self.basemodel.layer1[1].bn2.register_forward_hook(self.get_activation('low_level_feature'))
-            self.basemodel.layer4[1].bn2.register_forward_hook(self.get_activation('high_level_feature'))        
-        if basename == 'resnet50':
-            self.basemodel      = basemodels.resnet50(weights='DEFAULT') 
-            self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
-            self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+            self.basemodel.layer4[1].bn2.register_forward_hook(self.get_activation('high_level_feature'))      
+            
         if basename == 'resnet34':
             self.basemodel      = basemodels.resnet34(weights='DEFAULT') 
             self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+            
+        if basename == 'resnet50':
+            self.basemodel      = basemodels.resnet50(weights='DEFAULT') 
+            self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+            
+        if basename == 'resnet101':
+            self.basemodel      = basemodels.resnet101(weights='DEFAULT') 
+            self.basemodel.layer1[2].bn2.register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.layer4[2].bn2.register_forward_hook(self.get_activation('high_level_feature'))
+
         if basename == 'squeezenet0':
             self.basemodel      = basemodels.squeezenet1_1(weights='DEFAULT') 
             self.basemodel.features[12].expand3x3 =  nn.Conv2d(64, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
@@ -134,14 +147,40 @@ class BaseModel(nn.Module):
             self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
             self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
             print(self.basemodel)
-        if basename == 'efficientnetb0':
-            self.basemodel      = basemodels.efficientnet_b0(weights='DEFAULT') 
-            print(self.basemodel)
-            self.basemodel.features[3].expand3x3_activation.register_forward_hook(self.get_activation('low_level_feature'))
-            self.basemodel.features[12].expand3x3_activation.register_forward_hook(self.get_activation('high_level_feature'))
+            
+        if basename == 'shufflenet05':
+            self.basemodel      = basemodels.shufflenet_v2_x0_5(weights='DEFAULT') 
+            self.basemodel.conv5[0] =  nn.Conv2d(192, 512, kernel_size=(1,1), stride=(1, 1), bias=False)
+            self.basemodel.conv5[1] =  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            self.basemodel.fc =  nn.Linear(in_features=512, out_features=1000, bias=True)
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('high_level_feature'))
+        
+        if basename == 'shufflenet10':
+            self.basemodel      = basemodels.shufflenet_v2_x1_0(weights='DEFAULT') 
+            self.basemodel.conv5[0] =  nn.Conv2d(464, 512, kernel_size=(1,1), stride=(1, 1), bias=False)
+            self.basemodel.conv5[1] =  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            self.basemodel.fc =  nn.Linear(in_features=512, out_features=1000, bias=True)
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('high_level_feature'))
             print(self.basemodel)
             
-
+        if basename == 'shufflenet15':
+            self.basemodel      = basemodels.shufflenet_v2_x1_5(weights='DEFAULT') 
+            self.basemodel.conv5[0] =  nn.Conv2d(704, 512, kernel_size=(1,1), stride=(1, 1), bias=False)
+            self.basemodel.conv5[1] =  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            self.basemodel.fc =  nn.Linear(in_features=512, out_features=1000, bias=True)
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('high_level_feature'))
+            
+        if basename == 'shufflenet20':
+            self.basemodel      = basemodels.shufflenet_v2_x2_0(weights='DEFAULT') 
+            self.basemodel.conv5[0] =  nn.Conv2d(976, 512, kernel_size=(1,1), stride=(1, 1), bias=False)
+            self.basemodel.conv5[1] =  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            self.basemodel.fc =  nn.Linear(in_features=512, out_features=1000, bias=True)
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('low_level_feature'))
+            self.basemodel.conv5[0].register_forward_hook(self.get_activation('high_level_feature'))
+            
             
         
     def increase_resolution(self):  
