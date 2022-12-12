@@ -104,9 +104,9 @@ class CholecT50():
     def split_selector(self, case='cholect50'):
         switcher = {
             'cholect50': {
-                'train': [1, 15, 26, 40, 52, 65, 79, 2, 18, 27, 43, 56, 66, 92, 4, 22, 31, 47, 57, 68, 96, 5, 23, 35, 48, 60, 70, 103, 13, 25, 36, 49, 62, 75, 110],
-                'val'  : [8, 12, 29, 50, 78],
-                'test' : [6, 51, 10, 73, 14, 74, 32, 80, 42, 111]
+                'train': [1, 15],#, 26, 40, 52, 65, 79, 2, 18, 27, 43, 56, 66,4, 22, 31, 47, 57, 68, 5, 23, 35, 48, 60, 70, 13, 25, 36, 49, 62, 75],
+                'val'  : [8, 12],#, 29, 50, 78],
+                'test' : [6, 51]#, 10, 73, 14, 74, 32, 80, 42]
             },
             'cholect50-challenge': {
                 'train': [1, 15, 26, 40, 52, 79, 2, 27, 43, 56, 66, 4, 22, 31, 47, 57, 68, 23, 35, 48, 60, 70, 13, 25, 49, 62, 75, 8, 12, 29, 50, 78, 6, 51, 10, 73, 14, 32, 80, 42],
@@ -114,8 +114,8 @@ class CholecT50():
                 'test':  [92, 96, 103, 110, 111]
             },
             'cholect45-crossval': {
-                1: [1, 2],
-                2: [4, 5],
+                1: [4, 5],
+                2: [1, 2],
                 3: [6, 8],
                 4: [10, 12],
                 5: [13, 14],
@@ -216,7 +216,7 @@ class T50(Dataset):
             image = self.transform(image)
         if self.target_transform:
             triplet_label = self.target_transform(triplet_label)
-        return image, (tool_label, verb_label, target_label, triplet_label)
+        return image, (tool_label, verb_label, target_label, triplet_label), img_path, index
 
 
 if __name__ == "__main__":
