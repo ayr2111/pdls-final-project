@@ -1,26 +1,60 @@
 
 <div align="center">
 <a href="http://camma.u-strasbg.fr/">
-<img src="https://github.com/CAMMA-public/rendezvous/raw/main/files/CammaLogo.png" width="18%">
+<img src="./img_src/Columbia-Lions-Logo.png" width="200" />
 </a>
 </div>
-<br/>
+
+# COMS-6998 Final Project: Applications of Deep Learning in Surgery
+#### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
+
+## Project Description
+
+#### Model Overview
+
+<img src="files/tripnet.png" width="98%">
+
+The Tripnet model is composed of:
+* Feature Extraction layer: extract high and low level features from input image from a video
+* Encoder: for triplet components encoding
+    * Weakly-Supervised Localization (WSL) Layer: for localizing the instruments
+    * Class Activation Guide (CAG): for detecting the verbs and targets leveraging the instrument activations.
+* Decoder: for triplet assocaition due to multi-instances
+    * 3D interaction space (3Dis): for learning to associate instrument-verb-target using a learning projection and for final triplet classification.
 
 
-
-![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white) ![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white) [![](https://img.shields.io/badge/WORK```IN-PROGRESS-blue?style=for-the-badge)](https://hamzamohdzubair.github.io/redant/)
-
-
-# **Tripnet**: Recognition of instrument-tissue interactions in endoscopic videos via action triplets
-<i>CI Nwoye, C Gonzalez, T Yu, P Mascagni, D Mutter, J Marescaux, and N Padoy</i>
-
-<img src="https://github.com/CAMMA-public/rendezvous/raw/main/files/examples-1.png" width="100%">
-
-This repository contains the implementation code, inference code, and evaluation scripts.<br />[![ArXiv paper](https://img.shields.io/badge/arxiv-2007.05405-red)](https://arxiv.org/abs/2007.05405) [![Journal Publication](https://img.shields.io/badge/Spinger-LNCS%2012263-magenta)](https://link.springer.com/chapter/10.1007/978-3-030-59716-0_35)
+## Repository Description
 
 
+## Example Commands
 
-# Abstract
+```
+------------------------------ Starting New Test ------------------------------
+Model: Resnet18
+Compute Device Assigned: Tesla V100-SXM2-16GB
+Dataset Loaded: cholect45-crossval
+Resnet18 Model Built
+Metrics Built
+Model Weights Loaded
+Experiment started ...
+   logging outputs to:  ./__checkpoint__/run_0/tripnet_cholectcholect45-crossval_k1_lowres.log
+| resnet18 | epoch  1/10 | batch    0|
+| resnet18 | epoch  1/10 | batch   10|
+| resnet18 | epoch  1/10 | batch   20|
+| resnet18 | epoch  1/10 | batch   30|
+| resnet18 | epoch  1/10 | batch   40|
+| resnet18 | epoch  1/10 | batch   50|
+| resnet18 | epoch  1/10 | batch   60|
+| resnet18 | epoch  1/10 | batch   70|
+| resnet18 | epoch  1/10 | batch   80|
+| resnet18 | epoch  1/10 | batch   90|
+| resnet18 | epoch  1/10 | batch  100|
+```
+
+## Results
+
+
+## Abstract
 Recognition of surgical activity is an essential component to develop context-aware decision support for the operating room. In this work, we tackle the recognition of fine-grained activities, modeled as action triplets <instrument, verb, target> representing the tool activity. 
 
 To this end, we introduce a new laparoscopic dataset, <i>CholecT40</i>, consisting of 40 videos from the public dataset Cholec80 in which all frames have been annotated using 128 triplet classes. 
@@ -38,17 +72,6 @@ Furthermore, we present an approach to recognize these triplets directly from th
 <br />
 
 
-# Model Overview
-
-<img src="files/tripnet.png" width="98%">
-
-The Tripnet model is composed of:
-* Feature Extraction layer: extract high and low level features from input image from a video
-* Encoder: for triplet components encoding
-    * Weakly-Supervised Localization (WSL) Layer: for localizing the instruments
-    * Class Activation Guide (CAG): for detecting the verbs and targets leveraging the instrument activations.
-* Decoder: for triplet assocaition due to multi-instances
-    * 3D interaction space (3Dis): for learning to associate instrument-verb-target using a learning projection and for final triplet classification.
 
 
 
