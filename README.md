@@ -5,10 +5,22 @@
 </a>
 </div>
 
-# COMS-6998 Final Project: Applications of Deep Learning in Surgery
+# COMS-6998: Applications of Deep Learning in Surgery
 #### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
 
 ## Project Description
+
+Recent advances in minimally invasive surgery have yielded 
+datasets of intraoperative video recordings, well
+suited for deep learning applications. This project investigates
+deep learning methods applied to laparoscopic cholecystectomy 
+(gallbladder removal) surgery videos specifically, comparing feature
+extraction architectures, characterize them in ways not explored in the published
+literature, attempting to improve them with transfer learning, and 
+applying human interpretable visual results based on class activation mapping.
+
+<img src="/img_src/project_summary.png" width="98%">
+
 
 #### Model Overview
 
