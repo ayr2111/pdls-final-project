@@ -1,0 +1,153 @@
+
+
+
+**************************************************************************************************************************************************************************
+******************* Run: run.py | Framework: PyTorch | Method: tripnet_cholectcholect45-crossval_k1_lowres | Version: 6 | Data: CholecT50 | Batch: 64 *******************
+***** Time: Tue Dec 13 03:58:46 2022 | Start: 0-epoch  0-steps | Init CKPT: None | Save CKPT: ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth *****
+*** LR Config: Init: [0.01, 0.001, 0.0001] | Peak: [0.1, 0.01, 0.001] | Warmup Epoch: [9, 18, 58] | Rise: 0.1 | Decay 0.99 | train params 3619034 | all params 3619034 ***
+**************************************************************************************************************************************************************************
+Traning | lr: [[0.01], [0.001], [0.0001]] | epoch 0 | completed | Losses => i: [0.6957] v: [0.2492] t: [0.1662] ivt: [0.7022] >> eta: 45.01 secs
+Evaluating @ epoch:  0
+>>> Saving checkpoint for epoch 1 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 04:00:18 2022 
+							 video-wise | eta 46.40 secs | mAP => ivt: [0.03235] 
+--------------------------------------------------
+Test Results
+Per-category AP: 
+I   : [0.53899108 0.04676772 0.47210453 0.03894381 0.03622878 0.07509728]
+V   : [0.22571864 0.37427752 0.38421195 0.03961353 0.04173928 0.03089009
+ 0.0470908  0.00238149 0.00366386 0.14349792]
+T   : [0.56497308 0.01764996 0.07341567 0.03142937 0.00355505 0.01496111
+ 0.03328172 0.04076176 0.10736261        nan 0.06236021 0.02388348
+ 0.00111777 0.05740086 0.16993831]
+IV  : [0.19918431 0.35805929        nan 0.00517605 0.06407174        nan
+        nan        nan 0.04518611 0.00265957        nan 0.33103032
+ 0.00178459        nan 0.0940517         nan        nan 0.02689172
+        nan 0.02793535        nan        nan        nan 0.04396932
+ 0.00296807 0.00478089]
+IT  : [0.35886925        nan 0.00646022        nan 0.00286839 0.12101469
+ 0.05701798 0.02212581 0.00156824 0.03107912 0.06407174        nan
+        nan        nan        nan        nan 0.01792584 0.03482085
+ 0.01043389        nan        nan 0.03686652        nan 0.00265957
+ 0.22666063 0.01634255 0.05389518 0.02637394        nan 0.00094162
+ 0.00175516 0.05377816        nan 0.0940517         nan        nan
+ 0.01012193 0.00739768        nan        nan        nan 0.0403733
+        nan        nan        nan 0.01602713 0.01574343        nan
+        nan        nan        nan        nan        nan        nan
+ 0.04396932 0.00559419        nan        nan 0.00478089]
+IVT : [       nan        nan        nan        nan 0.01484877        nan
+        nan 0.18739882        nan        nan        nan        nan
+ 0.03107912 0.00517605        nan 0.00251619        nan 0.24440815
+ 0.0018461  0.12038766 0.05384011 0.02278982 0.03482085 0.01792584
+        nan        nan        nan        nan        nan 0.01564499
+        nan 0.03686652        nan        nan        nan        nan
+        nan        nan        nan        nan        nan        nan
+        nan        nan        nan        nan 0.00156986        nan
+        nan        nan        nan        nan 0.00246941        nan
+        nan        nan        nan 0.03083674 0.05380502 0.01649179
+ 0.23054779 0.05409238        nan        nan        nan        nan
+        nan        nan 0.00739768 0.01012193        nan        nan
+ 0.03691837        nan        nan        nan        nan        nan
+ 0.01574343 0.01602713        nan        nan 0.04396932        nan
+        nan        nan        nan        nan 0.00559419        nan
+        nan        nan        nan        nan 0.06407174 0.00265957
+ 0.0940517         nan        nan 0.00478089]
+--------------------------------------------------
+Mean AP:  I  |  V  |  T  |  IV  |  IT  |  IVT 
+:::::: : 0.2014 | 0.1293 | 0.0859 | 0.0863 | 0.0462 | 0.0463 
+==================================================
+All done!
+Shutting done...
+It is what it is ...
+C'est finis! --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+**************************************************************************************************************************************************************************
+******************* Run: run.py | Framework: PyTorch | Method: tripnet_cholectcholect45-crossval_k1_lowres | Version: 6 | Data: CholecT50 | Batch: 64 *******************
+***** Time: Tue Dec 13 05:46:38 2022 | Start: 0-epoch  0-steps | Init CKPT: None | Save CKPT: ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth *****
+*** LR Config: Init: [0.01, 0.001, 0.0001] | Peak: [0.1, 0.01, 0.001] | Warmup Epoch: [9, 18, 58] | Rise: 0.1 | Decay 0.99 | train params 3619034 | all params 3619034 ***
+**************************************************************************************************************************************************************************
+Traning | lr: [[0.01], [0.001], [0.0001]] | epoch 0 | completed | Losses => i: [0.5925] v: [0.2641] t: [0.1683] ivt: [0.7039] >> eta: 43.97 secs
+Evaluating @ epoch:  0
+>>> Saving checkpoint for epoch 1 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 05:48:08 2022 
+							 video-wise | eta 45.79 secs | mAP => ivt: [0.03217] 
+Traning | lr: [[0.02], [0.0015], [0.00011551724137931035]] | epoch 1 | completed | Losses => i: [0.4132] v: [0.2315] t: [0.1360] ivt: [0.7052] >> eta: 42.58 secs
+Evaluating @ epoch:  1
+>>> Saving checkpoint for epoch 2 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 05:49:35 2022 
+							 video-wise | eta 45.16 secs | mAP => ivt: [0.03309] 
+Traning | lr: [[0.03], [0.002], [0.00013103448275862068]] | epoch 2 | completed | Losses => i: [0.4114] v: [0.2268] t: [0.1863] ivt: [0.6993] >> eta: 42.50 secs
+Evaluating @ epoch:  2
+							 video-wise | eta 45.23 secs | mAP => ivt: [0.02973] 
+Traning | lr: [[0.039999999999999994], [0.0025], [0.00014655172413793104]] | epoch 3 | completed | Losses => i: [0.2944] v: [0.1800] t: [0.2200] ivt: [0.7026] >> eta: 42.77 secs
+Evaluating @ epoch:  3
+>>> Saving checkpoint for epoch 4 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 05:52:32 2022 
+							 video-wise | eta 45.22 secs | mAP => ivt: [0.03371] 
+Traning | lr: [[0.04999999999999999], [0.003], [0.0001620689655172414]] | epoch 4 | completed | Losses => i: [0.3152] v: [0.2292] t: [0.1608] ivt: [0.6958] >> eta: 43.05 secs
+Evaluating @ epoch:  4
+>>> Saving checkpoint for epoch 5 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 05:54:00 2022 
+							 video-wise | eta 45.12 secs | mAP => ivt: [0.03423] 
+Traning | lr: [[0.059999999999999984], [0.0035000000000000005], [0.00017758620689655173]] | epoch 5 | completed | Losses => i: [0.2152] v: [0.2088] t: [0.1331] ivt: [0.6908] >> eta: 42.58 secs
+Evaluating @ epoch:  5
+							 video-wise | eta 44.93 secs | mAP => ivt: [0.02985] 
+Traning | lr: [[0.06999999999999998], [0.004], [0.00019310344827586207]] | epoch 6 | completed | Losses => i: [0.2259] v: [0.1374] t: [0.1142] ivt: [0.6935] >> eta: 42.51 secs
+Evaluating @ epoch:  6
+							 video-wise | eta 45.19 secs | mAP => ivt: [0.03344] 
+Traning | lr: [[0.07999999999999997], [0.0045000000000000005], [0.0002086206896551724]] | epoch 7 | completed | Losses => i: [0.1979] v: [0.1329] t: [0.1095] ivt: [0.7000] >> eta: 42.84 secs
+Evaluating @ epoch:  7
+							 video-wise | eta 45.18 secs | mAP => ivt: [0.02842] 
+Traning | lr: [[0.08999999999999997], [0.005000000000000001], [0.00022413793103448273]] | epoch 8 | completed | Losses => i: [0.1128] v: [0.2650] t: [0.1378] ivt: [0.6989] >> eta: 42.91 secs
+Evaluating @ epoch:  8
+							 video-wise | eta 44.87 secs | mAP => ivt: [0.02953] 
+Traning | lr: [[0.09999999999999996], [0.005500000000000001], [0.00023965517241379306]] | epoch 9 | completed | Losses => i: [0.3150] v: [0.3348] t: [0.1420] ivt: [0.6912] >> eta: 42.30 secs
+Evaluating @ epoch:  9
+>>> Saving checkpoint for epoch 10 at ./__checkpoint__/run_6/tripnet_cholectcholect45-crossval_k1_lowres.pth, time Tue Dec 13 06:01:20 2022 
+							 video-wise | eta 45.95 secs | mAP => ivt: [0.03552] 
+--------------------------------------------------
+Test Results
+Per-category AP: 
+I   : [0.91596029 0.58243102 0.94787314 0.06811094 0.39829482 0.13495331]
+V   : [0.43953824 0.67065791 0.77276813 0.33381632 0.30203633 0.06707777
+ 0.06878083 0.08895351 0.00841308 0.23126345]
+T   : [0.85571776 0.04900988 0.12647197 0.07830278 0.00302203 0.07383893
+ 0.16511107 0.05371759 0.45594682        nan 0.0857722  0.04532208
+ 0.00124203 0.31280088 0.25234896]
+IV  : [0.18550806 0.43008638        nan 0.00320729 0.05618282        nan
+        nan        nan 0.05418492 0.00140056        nan 0.26633586
+ 0.00115774        nan 0.10914968        nan        nan 0.08619069
+        nan 0.08757359        nan        nan        nan 0.02158965
+ 0.01757195 0.0029265 ]
+IT  : [0.35253981        nan 0.01158706        nan 0.00324873 0.08092819
+ 0.06896387 0.04928897 0.00242778 0.03639749 0.05618282        nan
+        nan        nan        nan        nan 0.03284943 0.01433225
+ 0.01769033        nan        nan 0.02611629        nan 0.00140056
+ 0.16074881 0.01568693 0.07682918 0.02067988        nan 0.00082169
+ 0.00200114 0.03837988        nan 0.10914968        nan        nan
+ 0.0250332  0.00422874        nan        nan        nan 0.04556869
+        nan        nan        nan 0.01859266 0.04123682        nan
+        nan        nan        nan        nan        nan        nan
+ 0.02158965 0.01757322        nan        nan 0.0029265 ]
+IVT : [       nan        nan        nan        nan 0.02015799        nan
+        nan 0.26300229        nan        nan        nan        nan
+ 0.03639749 0.00320729        nan 0.00639917        nan 0.35035671
+ 0.00333458 0.08172599 0.14180956 0.05259184 0.01433225 0.03284943
+        nan        nan        nan        nan        nan 0.00638341
+        nan 0.02611629        nan        nan        nan        nan
+        nan        nan        nan        nan        nan        nan
+        nan        nan        nan        nan 0.00098135        nan
+        nan        nan        nan        nan 0.00152666        nan
+        nan        nan        nan 0.02178705 0.0763801  0.01208066
+ 0.16581605 0.06929068        nan        nan        nan        nan
+        nan        nan 0.00422874 0.0250332         nan        nan
+ 0.0133323         nan        nan        nan        nan        nan
+ 0.04123682 0.01859266        nan        nan 0.02158965        nan
+        nan        nan        nan        nan 0.01757322        nan
+        nan        nan        nan        nan 0.05618282 0.00140056
+ 0.10914968        nan        nan 0.0029265 ]
+--------------------------------------------------
+Mean AP:  I  |  V  |  T  |  IV  |  IT  |  IVT 
+:::::: : 0.5079 | 0.2983 | 0.1828 | 0.0945 | 0.0452 | 0.0531 
+==================================================
+All done!
+Shutting done...
+It is what it is ...
+C'est finis! --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
