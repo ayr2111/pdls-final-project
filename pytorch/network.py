@@ -103,9 +103,7 @@ class Encoder(nn.Module):
         self.cagam      = CAG(num_tool, num_verb, num_target, in_depth=in_channels, out_depth=32)
         
     def forward(self, x):
-        print(f'x: {x.shape}')
         high_x, low_x = self.basemodel(x)
-        print(f'high_x: {high_x.shape}')
         enc_i         = self.wsl(high_x)
         enc_v, enc_t  = self.cagam(high_x, enc_i[0])
         return enc_i, enc_v, enc_t

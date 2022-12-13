@@ -143,7 +143,8 @@ ckpt_path       = os.path.join(model_dir, '{}.pth'.format(modelname))
 logfile         = os.path.join(model_dir, '{}.log'.format(modelname))
 data_augmentations      = FLAGS.augmentation_list 
 iterable_augmentations  = []
-print("Configuring network ...")
+print("\n\n" + "-"*30 + " Starting New Test " + "-"*30)
+print(f"Model: {basename.capitalize()}")
 
 
 # Class Dictionaries
@@ -301,7 +302,7 @@ def save_cam_figure(feature_conv, h_logit, y, image, img_file, img_index, obj_st
     
     # Annotations
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_size = 1.1
+    font_size = 0.7
     font_thickness = 2
     x,y = 10,470
     video_str = img_file[img_file.find('VID'):img_file.find('VID')+5]
@@ -312,14 +313,16 @@ def save_cam_figure(feature_conv, h_logit, y, image, img_file, img_index, obj_st
         
     # Save Images
     for (image_ins, title_str) in zip([heatmap, opencv_image, result], ['cam','input','overlay']):
-        img_titled = cv2.putText(image_ins, f'{video_str}_{img_index}_{obj_str}', (x,y), font, font_size, (0,0,0), font_thickness, cv2.LINE_AA)
+        img_titled = cv2.putText(image_ins, f'{video_str}_{img_index}_{obj_str}', (x,y), font, font_size, (255,255,255), font_thickness, cv2.LINE_AA)
         cv2.imwrite(f'/home/jupyter/CAM/{basename}/{video_str}/{img_index:06d}_{obj_str}_{title_str}.png', img_titled)
     
 
 def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, loss_fn_ivt, optimizers, scheduler, epoch):
     start = time.time() 
-    xxx = False
+    n_batches = int(len(dataloader) / batch_size)
     for batch, (img, (y1, y2, y3, y4), img_pth, img_idx) in enumerate(dataloader):
+        if batch % 10 == 0:
+            print(f'| {basename} | epoch {epoch+1:2d}/{epochs:2d} | batch {batch:4d}|')
         img, y1, y2, y3, y4 = img.cuda(), y1.cuda(), y2.cuda(), y3.cuda(), y4.cuda()
         model.train()        
         tool, verb, target, triplet = model(img)
@@ -331,7 +334,12 @@ def train_loop(dataloader, model, activation, loss_fn_i, loss_fn_v, loss_fn_t, l
         loss_v          = loss_fn_v(logit_v, y2.float())
         loss_t          = loss_fn_t(logit_t, y3.float())
         loss_ivt        = loss_fn_ivt(logit_ivt, y4.float())  
-        loss            = (loss_i) + (loss_v) + (loss_t) + loss_ivt         
+        loss            = (loss_i) + (loss_v) + (loss_t) + loss_ivt
+        
+        # GPU memory
+        del img, y1, y2, y3, y4
+        torch.cuda.empty_cache()
+        
         # Backpropagation # optimizer.zero_grad()
         for param in model.parameters():
             param.grad = None
@@ -411,6 +419,8 @@ def weight_mgt(score, epoch):
 
 
 #%% assign device and set debugger options
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(f'Compute Device Assigned: {torch.cuda.get_device_name(0)}')
 assign_gpu(gpu=gpu)
 np.seterr(divide='ignore', invalid='ignore')
 torch.autograd.set_detect_anomaly(False)
@@ -444,7 +454,7 @@ test_dataloaders = []
 for video_dataset in test_dataset:
     test_dataloader = DataLoader(video_dataset, batch_size=batch_size, shuffle=False, prefetch_factor=3*batch_size, num_workers=3, pin_memory=True, persistent_workers=True, drop_last=False)
     test_dataloaders.append(test_dataloader)
-print("Dataset loaded ...")
+print(f"Dataset Loaded: {dataset_variant}")
 
 
 #%% class weight balancing
@@ -468,7 +478,7 @@ target_weight   = [0.49752894, 0.52041527, 0.49752894, 0.51394739, 2.71899565, 1
 model = network.Tripnet(basename, hr_output=hr_output).cuda()
 pytorch_total_params = sum(p.numel() for p in model.parameters())
 pytorch_train_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-print("Model built ...")
+print(f"{basename.capitalize()} Model Built")
 
 #%% performance tracker for hp tuning
 benchmark   = torch.nn.Parameter(torch.tensor([0.0]), requires_grad=False)
@@ -492,7 +502,7 @@ if not set_chlg_eval:
     mAPi.reset_global()
     mAPv.reset_global()
     mAPt.reset_global()
-print("Metrics built ...")
+print("Metrics Built")
 
 
 #%% optimizer and lr scheduler
@@ -532,7 +542,7 @@ elif os.path.exists(pretrain_dir):
     model.state_dict().update(pretrained_dict)
     model.load_state_dict(pretrained_dict, strict=False)
     resume_ckpt = pretrain_dir
-print("Model's weight loaded ...")
+print("Model Weights Loaded")
 
 
 #%% log config
@@ -572,7 +582,7 @@ if is_train:
 
 #%% eval
 if is_test:
-    print("Test weight used: ", test_ckpt)
+    print(f"Evaluating Trained {basename.capitalize()}")
     model.load_state_dict(torch.load(test_ckpt))
     mAP.reset_global()
     for test_dataloader in test_dataloaders:
