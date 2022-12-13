@@ -8,7 +8,7 @@
 # COMS-6998: Applications of Deep Learning in Surgery
 #### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
 
-## Project Description
+## I. Project Description
 
 Recent advances in minimally invasive surgery have yielded 
 datasets of intraoperative video recordings, well
@@ -17,28 +17,81 @@ deep learning methods applied to laparoscopic cholecystectomy
 (gallbladder removal) surgery videos specifically, comparing feature
 extraction architectures, characterize them in ways not explored in the published
 literature, attempting to improve them with transfer learning, and 
-applying human interpretable visual results based on class activation mapping.
+applying human interpretable visual results based on class activation mapping. 
 
-<img src="/img_src/project_summary.png" width="98%">
-
-
-#### Model Overview
-
-<img src="files/tripnet.png" width="98%">
-
-The Tripnet model is composed of:
-* Feature Extraction layer: extract high and low level features from input image from a video
-* Encoder: for triplet components encoding
-    * Weakly-Supervised Localization (WSL) Layer: for localizing the instruments
-    * Class Activation Guide (CAG): for detecting the verbs and targets leveraging the instrument activations.
-* Decoder: for triplet assocaition due to multi-instances
-    * 3D interaction space (3Dis): for learning to associate instrument-verb-target using a learning projection and for final triplet classification.
+<div align="center">
+<a href="http://camma.u-strasbg.fr/">
+<img src="./img_src/project_summary.png" width="600">
+</a>
+</div>
 
 
-## Repository Description
+#### Dataset
+
+The dataset used here is [CholecT45](https://github.com/CAMMA-public/cholect45) [1], a dataset of laparoscopic cholecystectomy surgical videos. The dataset contains 45 videos of cholecystectomy procedures collected in Strasbourg, France. The images are extracted at 1 fps from the videos and annotated with triplet information about surgical actions in the format of <instrument, verb, target>. There are 90,489 frames and 127,385 triplet instances in the dataset. An example of three frames for six different videos is shown below.
+
+Each video is annotated with an action triplet containing at least one of each of 7 instruments, 11 verbs, and 15 tissues:
+
+- **Instruments:** grasper, bipolar, hook, scissors, clipper, irrigator, null_instrument
+- **Verbs:** grasp, retract, dissect, coagulate, clip, cut, aspirate, irrigate, pack, null_verb
+- **Instruments:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
+
+<div align="center">
+<a href="http://camma.u-strasbg.fr/">
+<img src="./img_src/video_frames_example.png" width="800">
+</a>
+</div>
+
+#### Thrust 1: Surgical Video Annotation
+
+This project classifies the endoscopic surgical videos of [1] with action triplets of format (surgical
+tool, surgical action, targeted tissue) listed above using a spatiotemporal deep learning architecture called TripNet [2]. 
+
+<div align="center">
+<a href="http://camma.u-strasbg.fr/">
+<img src="img_src/tripnet.png" width="700">
+</a>
+</div>
+
+The Tripnet model is composed of a feature extraction layer that provides input features to the encoder and decoder in the subsequent architecture. This feature extractor is studied further in thrust 2 by comparing fetaure extraction models and thrust 3 by evaluating transfer learning methods. 
+
+The TripNet model encoder encodes triplet components using a Weakly-Supervised Localization (WSL) layer that localizes the instruments. Moreover, the Class Activation Guide (CAG) detects the verbs and targets leveraging the instrument activations.
+
+the TripNet decoder associates triplets from multi-instances, learning instrument-verb-target associations using a learning projection and for final triplet classification.
+
+#### Thrust 2: TripNet Characterization
+
+Characterize the performance of the Thrust 1 architecture across different
+deep learning configurations based on dropout layers and associated probability, batch
+normalization layers, activation functions, batch sizes, learning rates, weight
+initialization, optimizers, and input data standardization techniques. The trade space will
+be evaluated for convergence speed and classification accuracy.
+
+- Weights and Balances plan
+- Feature extracor model comparison plan
+- Downsampling Plan
+
+#### Thrust 3: Transfer Learning
+
+Implement a transfer learning method using non-gallbladder tissue datasets
+such as gastrointestinal dataset [3] to pretrain the TripNet spatial feature extractor and
+evaluate the change in performance for gallbladder surgical videos similar to [4]. Only
+the ResNet feature extractor is pre-trained, then fine-tuned using the CholecT45 dataset.
+
+#### Thrust 4: Explainability via Class Activation Mapping
+
+Bring explainability of machine learning model decisions to surgical annotation
+deep learning by pairing Thrust 1 architecture with class activation mappings (CAM) [5].
 
 
-## Example Commands
+## II. Repository Description
+
+
+
+
+
+
+## III. Example Commands
 
 ```
 ------------------------------ Starting New Test ------------------------------
@@ -63,54 +116,7 @@ Experiment started ...
 | resnet18 | epoch  1/10 | batch  100|
 ```
 
-## Results
-
-
-## Abstract
-Recognition of surgical activity is an essential component to develop context-aware decision support for the operating room. In this work, we tackle the recognition of fine-grained activities, modeled as action triplets <instrument, verb, target> representing the tool activity. 
-
-To this end, we introduce a new laparoscopic dataset, <i>CholecT40</i>, consisting of 40 videos from the public dataset Cholec80 in which all frames have been annotated using 128 triplet classes. 
-
-Furthermore, we present an approach to recognize these triplets directly from the video data. It relies on a module called <i>class activation guide</i>, which uses the instrument activation maps to guide the verb and target recognition.  To model the recognition of multiple triplets in the same frame, we also propose a trainable <i>3D interaction space (3Dis)</i>, which captures the associations between the triplet components. Finally, we demonstrate the significance of these contributions via several ablation studies and comparisons to baselines on CholecT40.  
-
-<br />
-
-
-# News and Updates
-- <b>[2022.05.09]:</b> TensorFlow v2 implementation code released!
-- <b>[2022.05.09]:</b> TensorFlow v1 implementation code released!
-- <b>[2022.05.03]:</b> PyTorch implementation code released!
-
-<br />
-
-
-
-
-
-We hope this repo will help researches/engineers in the development of surgical action recognition systems. For algorithm development, we provide training data, baseline models and evaluation methods to make a level playground. For application usage, we also provide a small video demo that takes raw videos as input without any bells and whistles.
-
-<br />
-
-
-# Performance
-
-## Results Table
-
-
-Dataset ||Components AP ||||| Association AP |||
-:---:|:---:|:---:|:---: |:---:|:---:|:---:|:---:|:---:|:---:|
-.. | AP<sub>I</sub> | AP<sub>V</sub> | AP<sub>T</sub> ||| AP<sub>IV</sub> | AP<sub>IT</sub> | AP<sub>IVT</sub> |
-CholecT40 | 89.7 | 60.7 | 38.3 ||| 35.5 | 19.9 | 19.0|
-CholecT45 | 89.9 | 59.9 | 37.4 ||| 31.8 | 27.1 | 24.4|
-CholecT50 | 92.1 | 54.5 | 33.2 ||| 29.7 | 26.4 | 20.0|
-
-<br />
-
-
-
-# Installation
-
-## Requirements
+#### Requirements
 The model depends on the following libraries:
 1. sklearn
 2. PIL
@@ -127,13 +133,13 @@ The model depends on the following libraries:
 
 <br />
 
-## System Requirements:
+#### System Requirements:
 The code has been test on Linux operating system. It runs on both CPU and GPU.
 Equivalence of basic OS commands such as _unzip, cd, wget_, etc. will be needed to run in Windows or Mac OS.
 
 <br />
 
-## Quick Start
+#### Quick Start
 * clone the git repository: ``` git clone https://github.com/CAMMA-public/tripnet.git ```
 * install all the required libraries according to chosen your framework.
 * download the dataset
@@ -143,18 +149,6 @@ Equivalence of basic OS commands such as _unzip, cd, wget_, etc. will be needed 
 
 <br />
 
-
-
-# Dataset Zoo
-
-* CholecT40
-* [CholecT45](https://github.com/CAMMA-public/cholect45) 
-* CholecT50
-* [Dataset splits](https://arxiv.org/abs/2204.05235)
-
-<br />
-
-## Data Preparation
 
 * All frames are resized to 256 x 448 during training and evaluation.
 * Image data are mean normalized.
@@ -167,7 +161,7 @@ Equivalence of basic OS commands such as _unzip, cd, wget_, etc. will be needed 
 <br />
 
 
-## Evaluation Metrics
+#### Evaluation Metrics
 
 The *ivtmetrics* computes AP for triplet recognition. It also support the evaluation of the recognition of the triplet components.
 ```
@@ -182,13 +176,13 @@ Usage guide is found on [pypi.org](https://pypi.org/project/ivtmetrics/).
 <br />
 
 
-# Running the Model
+#### Running the Model
 
 The code can be run in a trianing mode (`-t`) or testing mode (`-e`)  or both (`-t -e`) if you want to evaluate at the end of training :
 
 <br />
 
-## Training on CholecT45/CholecT50 Dataset
+##### Training on CholecT45/CholecT50 Dataset
 
 Simple training on CholecT50 dataset:
 ```
@@ -206,7 +200,7 @@ The experimental setup of the published model is contained in the paper.
 
 <br />
 
-## Testing
+##### Testing
 
 ```
 python3 run.py -e --dataset_variant=cholect45-crossval --kfold 3 --batch 32 --version=1 --test_ckpt="/path/to/model-k3/weights" --data_dir="/path/to/dataset"
@@ -214,7 +208,7 @@ python3 run.py -e --dataset_variant=cholect45-crossval --kfold 3 --batch 32 --ve
 
 <br />
 
-## Training on Custom Dataset
+##### Training on Custom Dataset
 
 Adding custom datasets is quite simple, what you need to do are:
 - organize your annotation files in the same format as in [CholecT45](https://github.com/CAMMA-public/cholect45) dataset. 
@@ -223,12 +217,20 @@ Adding custom datasets is quite simple, what you need to do are:
 <br />
 
 
-# Model Zoo
-
-* **N.B.** Download links to models' weights will not be provided until after the CholecTriplet2022 challenge.
+## IV. Results
 
 
-## PyTorch
+Dataset ||Components AP ||||| Association AP |||
+:---:|:---:|:---:|:---: |:---:|:---:|:---:|:---:|:---:|:---:|
+.. | AP<sub>I</sub> | AP<sub>V</sub> | AP<sub>T</sub> ||| AP<sub>IV</sub> | AP<sub>IT</sub> | AP<sub>IVT</sub> |
+CholecT40 | 89.7 | 60.7 | 38.3 ||| 35.5 | 19.9 | 19.0|
+CholecT45 | 89.9 | 59.9 | 37.4 ||| 31.8 | 27.1 | 24.4|
+CholecT50 | 92.1 | 54.5 | 33.2 ||| 29.7 | 26.4 | 20.0|
+
+<br />
+
+
+#### PyTorch
 | Network   | Base      | Resolution | Dataset   | Data split  |  Link             |
 ------------|-----------|------------|-----------|-------------|-------------------|
 | Tripnet   | ResNet-18 | Low        | CholecT50 | RDV         |   [Google] [Baidu] |
@@ -237,157 +239,24 @@ Adding custom datasets is quite simple, what you need to do are:
 
 <br />
 
-## TensorFlow v1
 
-| Network   | Base      | Resolution | Dataset   | Data split    | Link             |
-------------|-----------|------------|-----------|---------------|------------------|
-| Tripnet   | ResNet-18 | High       | CholecT50 | RDV           |  [Google] [Baidu] |
-| Tripnet   | ResNet-18 | High       | CholecT50 | Challenge     |  [Google] [Baidu] |
+# V. References
 
-<br />
+[1] A.P. Twinanda, S. Shehata, D. Mutter, J. Marescaux, M. de Mathelin, N. Padoy, EndoNet: A
+Deep Architecture for Recognition Tasks on Laparoscopic Videos, IEEE Transactions on Medical
+Imaging (TMI), arXiv preprint, 2017
 
+[2] Nwoye, Chinedu Innocent, et al. "Recognition of instrument-tissue interactions in endoscopic
+videos via action triplets." International Conference on Medical Image Computing and
+Computer-Assisted Intervention. Springer, Cham, 2020.
 
-<br />
+[3] Borgli, Hanna, et al. "HyperKvasir, a comprehensive multi-class image and video dataset for
+gastrointestinal endoscopy." Scientific data 7.1 (2020): 1-14.
 
-## TensorFlow v2
+[4] Christodoulidis, Stergios, et al. "Multisource transfer learning with convolutional neural
+networks for lung pattern analysis." IEEE journal of biomedical and health informatics 21.1
+(2016): 76-84.
 
-| Network   | Base      | Resolution | Dataset   | Data split    | Link             |
-------------|-----------|------------|-----------|---------------|------------------|
-| Tripnet   | ResNet-18 | High       | CholecT50 | RDV           |   [Google] [Baidu] |
-| Tripnet   | ResNet-18 | Low        | CholecT50 | RDV           |   [Google] [Baidu] |
-| Tripnet   | ResNet-18 | High       | CholecT50 | Challenge     |   [Google] [Baidu] |
-
-<br />
-
-## Baseline and Ablation Models
-
-TensorFlow v1
-| Model | AP<sub>i</sub> | AP<sub>iv</sub> | AP<sub>it</sub> |AP<sub>IVT</sub> | Link |
-------------|------------|------|-----|-----|-----|
-|Naive CNN  | 27.5 | 7.5 | 6.8 | 5.9 | [Google] [Baidu] |
-|MTL baseline | 74.6 |14.0 | 7.2 | 6.4 | [Google] [Baidu] |
-|Tripnet w/o CAG   | 89.5 | 20.6 | 12.1 | 12.1 | [Google] [Baidu] |
-|Tripnet w/c untrained 3Dis | 89.7 | 16.7 | 7.6 | 6.3 | [Google] [Baidu] |
-
-
-Models are being re-trained and weights are released periodically.
-
-<br /><br />
-
-
-# License
-
-
-This code, models, and datasets are available for **non-commercial scientific research purposes** provided by [CC BY-NC-SA 4.0 LICENSE](https://creativecommons.org/licenses/by-nc-sa/4.0/) attached as [LICENSE file](LICENSE). 
-By downloading and using this code you agree to the terms in the [LICENSE](LICENSE). Third-party codes are subject to their respective licenses.
-
-
-<br />
-
-
-
-
-# Related Resources
-<b>
-   
--  CholecT45 / CholecT50 Datasets
-   [![Download dataset](https://img.shields.io/badge/download-camma-yellowgreen)](http://camma.u-strasbg.fr/datasets)    [![GitHub](https://img.shields.io/badge/github-CholecT45-blue)](https://github.com/CAMMA-public/cholect45)   
--  Offical Dataset Splits 
-   [![Official dataset split](https://img.shields.io/badge/arxiv-2204.05235-red)](https://arxiv.org/abs/2204.05235)
-- Rendezvous 
-    [![Read on ArXiv](https://img.shields.io/badge/arxiv-2109.03223-red)](https://arxiv.org/abs/2109.03223)     [![Journal Publication](https://img.shields.io/badge/Elsevier-Medical%20Image%20Analysis-orange)](https://doi.org/10.1016/j.media.2022.102433)    [![GitHub](https://img.shields.io/badge/github-rendezvous-blue)](https://github.com/CAMMA-public/rendezvous) 
--  Attention Tripnet
-   [![ArXiv paper](https://img.shields.io/badge/arxiv-2109.03223-red)](https://arxiv.org/abs/2109.03223)    [![GitHub](https://img.shields.io/badge/github-attention.tripnet-blue)](https://github.com/CAMMA-public/attention-tripnet) 
--  CholecTriplet2021 Challenge
-   [![Challenge website](https://img.shields.io/badge/website-2021.cholectriplet-lightgreen)](https://cholectriplet2021.grand-challenge.org)    [![ArXiv paper](https://img.shields.io/badge/arxiv-2204.04746-red)](https://arxiv.org/abs/2204.04746)    [![GitHub](https://img.shields.io/badge/github-2021.cholectriplet-blue)](https://github.com/CAMMA-public/cholectriplet2022) 
--  CholecTriplet2022 Challenge
-   [![Challenge website](https://img.shields.io/badge/website-2022.cholectriplet-lightgreen)](https://cholectriplet2022.grand-challenge.org)    [![GitHub](https://img.shields.io/badge/github-2022.cholectriplet-blue)](https://github.com/CAMMA-public/cholectriplet2022)
- 
-</b>
-
-<br />
-
-
-
-
-# Citation
-If you find this repo useful in your project or research, please consider citing the relevant publications:
-
-- For the Tripnet and Baseline Models or any code from this repo:
-```
-@inproceedings{nwoye2020recognition,
-   title={Recognition of instrument-tissue interactions in endoscopic videos via action triplets},
-   author={Nwoye, Chinedu Innocent and Gonzalez, Cristians and Yu, Tong and Mascagni, Pietro and Mutter, Didier and Marescaux, Jacques and Padoy, Nicolas},
-   booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI)},
-   pages={364--374},
-   year={2020},
-   organization={Springer}
-}
-```
-
-- For the CholecT45/CholecT50 Dataset:
-```
-@article{nwoye2021rendezvous,
-  title={Rendezvous: Attention Mechanisms for the Recognition of Surgical Action Triplets in Endoscopic Videos},
-  author={Nwoye, Chinedu Innocent and Yu, Tong and Gonzalez, Cristians and Seeliger, Barbara and Mascagni, Pietro and Mutter, Didier and Marescaux, Jacques and Padoy, Nicolas},
-  journal={Medical Image Analysis},
-  volume={78},
-  pages={102433},
-  year={2022}
-}
-```
-
-
-- For the CholecT45/CholecT50 Official Dataset Splits:
-```
-@article{nwoye2022data,
-  title={Data Splits and Metrics for Benchmarking Methods on Surgical Action Triplet Datasets},
-  author={Nwoye, Chinedu Innocent and Padoy, Nicolas},
-  journal={arXiv preprint arXiv:2204.05235},
-  year={2022}
-}
-```
-
-
-- For the Rendezvous or Attention Tripnet Baseline Models or any snippet of code from this repo:
-```
-@article{nwoye2021rendezvous,
-  title={Rendezvous: Attention Mechanisms for the Recognition of Surgical Action Triplets in Endoscopic Videos},
-  author={Nwoye, Chinedu Innocent and Yu, Tong and Gonzalez, Cristians and Seeliger, Barbara and Mascagni, Pietro and Mutter, Didier and Marescaux, Jacques and Padoy, Nicolas},
-  journal={Medical Image Analysis},
-  volume={78},
-  pages={102433},
-  year={2022}
-}
-```
-
-
-
-- For the models presented @ CholecTriplet2021 Challenge:
-```
-@article{nwoye2022cholectriplet2021,
-  title={CholecTriplet2021: a benchmark challenge for surgical action triplet recognition},
-  author={Nwoye, Chinedu Innocent and Alapatt, Deepak and Vardazaryan, Armine ... Gonzalez, Cristians and Padoy, Nicolas},
-  journal={arXiv preprint arXiv:2204.04746},
-  year={2022}
-}
-```
-
-#
-This repo is maintained by [CAMMA](http://camma.u-strasbg.fr). Comments and suggestions on models are welcomed. Check this page for updates.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[5] Selvaraju, Ramprasaath R., et al. "Grad-cam: Visual explanations from deep networks via
+gradient-based localization." Proceedings of the IEEE international conference on computer
+vision. 2017.
