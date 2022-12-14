@@ -230,7 +230,21 @@ Experiment started ...
 
 #### Class Activation Mapping
 
-- Show comparison of CAM map across classes
+Each class requires a different feature extractor activation. Intuitively, identifying the surgical instrument will require different features than identifying the target tissue. In order to evaluate the models' ability to make decisions with this intuition, the class activation maps for each class type (instrument, verb, tissue) for the same image are compared. It's clear from the comparison with a ResNet-18 below that the model is learning to extract different features for each class type. 
+
+<div align="center">
+<img src="./img_src/class_cam_comparison_vid04_frame300_resnet18.png" width="800">
+</div>
+
+This comparison is done for a larger model, a ResNet-50, and a smaller model, a SqueezeNet, to show that the features learned per class type are mostly agnostic to the architecture and more specific to the class type. Specifically in this video frame, all models show instrument class activation as a large central feature over one or both of the surgical tools. The verb class type has a more sporadic activation map across all models which is intuitive because the model is looking at moving components. Lastly, the tissue class activation map is more interleaved between the tools, seemingly focusing on the background tissue. 
+
+<div align="center">
+<img src="./img_src/class_cam_comparison_vid04_frame300_resnet50.png" width="800">
+</div>
+
+<div align="center">
+<img src="./img_src/class_cam_comparison_vid04_frame300_squeezenet0.png" width="800">
+</div>
 
 #### Example Tables
 Dataset ||Components AP ||||| Association AP |||
