@@ -37,23 +37,19 @@ Each video is annotated with an action triplet containing at least one of each o
 - **Instruments:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
 
 <div align="center">
-<a href="http://camma.u-strasbg.fr/">
 <img src="./img_src/video_frames_example.png" width="800">
-</a>
-</div>
+</div>  
 
 #### Thrust 1: Surgical Video Annotation
 
 This project classifies the endoscopic surgical videos of [1] with action triplets of format (surgical
 tool, surgical action, targeted tissue) listed above using a spatiotemporal deep learning architecture called TripNet [2]. 
 
-<div align="center">
-<a href="http://camma.u-strasbg.fr/">
-<img src="img_src/tripnet.png" width="700">
-</a>
-</div>
-
 The Tripnet model is composed of a feature extraction layer that provides input features to the encoder and decoder in the subsequent architecture. This feature extractor is studied further in thrust 2 by comparing fetaure extraction models and thrust 3 by evaluating transfer learning methods. 
+
+<div align="center">
+<img src="./img_src/tripnet.png" width="700">
+</div>
 
 The TripNet model encoder encodes triplet components using a Weakly-Supervised Localization (WSL) layer that localizes the instruments. Moreover, the Class Activation Guide (CAG) detects the verbs and targets leveraging the instrument activations.
 
@@ -61,37 +57,135 @@ the TripNet decoder associates triplets from multi-instances, learning instrumen
 
 #### Thrust 2: TripNet Characterization
 
-Characterize the performance of the Thrust 1 architecture across different
-deep learning configurations based on dropout layers and associated probability, batch
-normalization layers, activation functions, batch sizes, learning rates, weight
-initialization, optimizers, and input data standardization techniques. The trade space will
-be evaluated for convergence speed and classification accuracy.
+Affter establishing the model, we characterize the performance of it across different
+deep learning configurations leveraging the [MLOps platform Weights and Balances](https://wandb.ai/site).
+There we evaluate architecture configurations with the best evaluation accuracies across the following parameterizations.
 
-- Weights and Balances plan
-- Feature extracor model comparison plan
-- Downsampling Plan
+- Batch Size: {64, 128, 256, 512, 1024}
+- Image Augmentation: {Original, Vertical Flip, Horizontal Flip, Contrast, 90-degree Rotation}
+- Learning Rate: {[0, 0.01, 0.01, 0.01], [0, 0.1, 0.1, 0.1], [0, 0.001, 0.001, 0.001]}
 
 #### Thrust 3: Transfer Learning
 
-Implement a transfer learning method using non-gallbladder tissue datasets
-such as gastrointestinal dataset [3] to pretrain the TripNet spatial feature extractor and
-evaluate the change in performance for gallbladder surgical videos similar to [4]. Only
-the ResNet feature extractor is pre-trained, then fine-tuned using the CholecT45 dataset.
+Next, we implement a transfer learning method using a non-gallbladder tissue dataset, the 
+gastrointestinal dataset [3], to pretrain the TripNet spatial feature extractor and
+evaluate the change in performance for gallbladder surgical videos similar to [4]. 
+
+<div align="center">
+<a href="https://www.nature.com/articles/s41597-020-00622-y/figures/1">
+<img src="./img_src/gi_tract.png" width="500">
+</a>
+</div>
 
 #### Thrust 4: Explainability via Class Activation Mapping
 
-Bring explainability of machine learning model decisions to surgical annotation
-deep learning by pairing Thrust 1 architecture with class activation mappings (CAM) [5].
+Lastly, the project brings explainability of machine learning model decisions to surgical annotation
+deep learning by pairing the deep learning network with class activation mappings (CAM) [5] to highlight areas of the image responsible for the classification decision. Ultimately this shows different emphasis areas in the same image for different classes (instrument, verb, tissue) which gives confidence the model is learning different and meaningful activations for each class. 
 
 
 ## II. Repository Description
 
+The repsitory is a fork of [2] with additions to the data handling module, deep learning module, and main execution module. Moreover, custom scripts were added for class activation mapping and further model characterization. The basis structure of the repository is below. The `__checkpoint__` folder is used to automatically store the `.log` files recording the results and the `.pth` trained model files with examples shown for two separate test runs `100` and `101`. The results from the `.log` file are more conveniently stored in a `seaborn`-friendly csv format in the `pytorch/results/` folder, with examples shown from two tests. 
 
+```
+pdls-final-project/
+├── pytorch
+│   ├── __checkpoint__
+│   │   ├── run_100
+│   │   │   ├── tripnet_cholectcholect45-crossval_k1_lowres.log
+│   │   │   └── tripnet_cholectcholect45-crossval_k1_lowres.pth
+│   │   ├── run_101
+│   │   │   ├── tripnet_cholectcholect45-crossval_k1_lowres.log
+│   │   │   └── tripnet_cholectcholect45-crossval_k1_lowres.pth
+│   ├── cam_mapping.py
+│   ├── dataloader.py
+│   ├── maps.txt
+│   ├── network.py
+│   ├── run.py
+│   └── run_model_comparison.sh
+├── results
+│   ├── model_comparison_1_2_6_8.csv
+│   └── model_comparison_4_5.csv
+├── tensorflow_1.x
+│   ├── dataloader.py
+│   ├── maps.txt
+│   ├── network.py
+│   └── readme.md
+└── tensorflow_2.x
+    ├── dataloader.py
+    ├── maps.txt
+    ├── network.py
+    └── readme.md
 
+```
 
-
+The repository supports TensorFlow 1.x, TensorFlow 2.x, and PyTorch, which are each in separate subdirectories under the main project directory. Within `pytorch`, the `cam_mapping.py` module provide class activation mapping utilities for explainability of the network's decisions. The `dataloader.py` module transforms and loads the gallbladder dataset and gastrointestinal dataset videos during training and inference. The `maps.txt` file maps integers to the string values of instruments, verbs, and targets in the decoder. The `network.py` file houses the feature extractor deep networks, the video encoder, and the video decoder described in [2]. The `run.py` module executes the experiment for the current configuration which is defined in `run_model_comparison.sh` for the main model comparison experiment. The scripts named as such in the TensorFlow modules do the same functions but in the Tensorflow API.
 
 ## III. Example Commands
+
+#### System Requirements
+
+The repository requires `Python >= 3.5` along with the following Python package dependencies.
+
+Based on user's choice of Deep Learning Framework:
+```
+PyTorch >= 1.10.1
+Torchvision >= 0.11
+TensorFlow >= 1.10
+TensorFlow >= 2.1
+```
+
+For all installations the following python packages are required:
+
+```
+sklearn
+PIL
+opencv-python-headless
+ivtmetrics
+```
+
+#### Getting the Data
+
+Download the data via wget or install axel if multiple cores available (`sudo apt-get install axel`):
+
+```
+wget -P data http://lnkiy.in/cholect45dataset
+
+or 
+
+axel -a -n 4 http://lnkiy.in/cholect45dataset
+```
+
+#### Generic Python Commands
+
+The generic command to run train and evaluate a model on the endoscopic dataset is below. The code can be run in a training mode (`-t`), testing mode (`-e`)  or both (`-t -e`).
+
+```
+python3 run.py -t -e  --data_dir="/path/to/dataset" --dataset_variant=cholect45-crossval --kfold=1 --epochs=180 --batch=64 --version=2 -l 1e-2 1e-3 1e-4 --pretrain_dir='path/to/imagenet/weights'
+```
+
+After training a model, if a new evaluation is desired with a saved model, the model checkpoint path can be referenced in the command to evaluate that exisitng model:
+
+```
+python3 run.py -e --dataset_variant=cholect45-crossval --kfold 3 --batch 32 --version=1 --test_ckpt="/path/to/model-k3/weights" --data_dir="/path/to/dataset"
+```
+
+#### Example Python Command
+
+The following command will train and evaluate a `ResNet-18` model on the `CholecT45` dataset specified by the `crossval` in `dataloader.py` and save all the results in the file `model_results.csv`. 
+
+```
+python3 ~/pdls-final-project/pytorch/run.py -t -e --data_dir="~/CholecT45" --csv_file="~/model_results.csv" --basename="resnet18" --dataset_variant=cholect45-crossval --kfold=1 --epochs=10 --batch=64 --version=0 -l 1e-2 1e-3 1e-4
+```
+#### Example Bash Command
+
+In order to run the model comparison test across multiple models, run the shell script from the `/pdls-final-project/pytorch/` directory:
+
+```
+~/pdls-final-project/pytorch/ $: bash run_model_comparison.sh
+```
+
+The test will begin and the outputs will show the current model being trained/tested, the progress, and where artifacts are saved to:
 
 ```
 ------------------------------ Starting New Test ------------------------------
@@ -116,110 +210,29 @@ Experiment started ...
 | resnet18 | epoch  1/10 | batch  100|
 ```
 
-#### Requirements
-The model depends on the following libraries:
-1. sklearn
-2. PIL
-3. Python >= 3.5
-4. ivtmetrics
-5. Developer's framework:
-    1. For Tensorflow version 1:
-        * TF >= 1.10
-    2. For Tensorflow version 2:
-        * TF >= 2.1
-    3. For PyTorch version:
-        - Pyorch >= 1.10.1
-        - TorchVision >= 0.11
-
-<br />
-
-#### System Requirements:
-The code has been test on Linux operating system. It runs on both CPU and GPU.
-Equivalence of basic OS commands such as _unzip, cd, wget_, etc. will be needed to run in Windows or Mac OS.
-
-<br />
-
-#### Quick Start
-* clone the git repository: ``` git clone https://github.com/CAMMA-public/tripnet.git ```
-* install all the required libraries according to chosen your framework.
-* download the dataset
-* download model's weights
-* train
-* evaluate
-
-<br />
-
-
-* All frames are resized to 256 x 448 during training and evaluation.
-* Image data are mean normalized.
-* The dataset variants are tagged in this code as follows: 
-   - cholect50 = CholecT50 with split used in the original paper.
-   - cholect50-challenge = CholecT50 with split used in the CholecTriplet challenge.
-   - cholect45-crossval = CholecT45 with official cross-val split **(currently public released)**.
-   - cholect50-crossval = CholecT50 with official cross-val split.
-
-<br />
-
-
-#### Evaluation Metrics
-
-The *ivtmetrics* computes AP for triplet recognition. It also support the evaluation of the recognition of the triplet components.
-```
-pip install ivtmetrics
-```
-or
-```
-conda install -c nwoye ivtmetrics
-```
-Usage guide is found on [pypi.org](https://pypi.org/project/ivtmetrics/).
-
-<br />
-
-
-#### Running the Model
-
-The code can be run in a trianing mode (`-t`) or testing mode (`-e`)  or both (`-t -e`) if you want to evaluate at the end of training :
-
-<br />
-
-##### Training on CholecT45/CholecT50 Dataset
-
-Simple training on CholecT50 dataset:
-```
-python run.py -t  --data_dir="/path/to/dataset" --dataset_variant=cholect50 --version=1
-```
-
-You can include more details such as epoch, batch size, cross-validation and evaluation fold, weight initialization, learning rates for all subtasks, etc.:
-
-```
-python3 run.py -t -e  --data_dir="/path/to/dataset" --dataset_variant=cholect45-crossval --kfold=1 --epochs=180 --batch=64 --version=2 -l 1e-2 1e-3 1e-4 --pretrain_dir='path/to/imagenet/weights'
-```
-
-All the flags can been seen in the `run.py` file.
-The experimental setup of the published model is contained in the paper.
-
-<br />
-
-##### Testing
-
-```
-python3 run.py -e --dataset_variant=cholect45-crossval --kfold 3 --batch 32 --version=1 --test_ckpt="/path/to/model-k3/weights" --data_dir="/path/to/dataset"
-```
-
-<br />
-
-##### Training on Custom Dataset
-
-Adding custom datasets is quite simple, what you need to do are:
-- organize your annotation files in the same format as in [CholecT45](https://github.com/CAMMA-public/cholect45) dataset. 
-- final model layers can be modified to suit your task by changing the class-size (num_tool_classes, num_verb_classes, num_target_classes, num_triplet_classes) in the argparse.
-
-<br />
 
 
 ## IV. Results
 
+#### Feature Extraction Comparison
 
+- Table of IVT Metrics from csv
+- Charts of IVT metrics from csv
+- CAM maps across different models for same image/class
+
+#### Model Characterization
+
+- weights and balances characterization figures
+
+#### Transfer Learning GI Surgery Data to Gallbladder Surgery Data
+
+- TBD
+
+#### Class Activation Mapping
+
+- Show comparison of CAM map across classes
+
+#### Example Tables
 Dataset ||Components AP ||||| Association AP |||
 :---:|:---:|:---:|:---: |:---:|:---:|:---:|:---:|:---:|:---:|
 .. | AP<sub>I</sub> | AP<sub>V</sub> | AP<sub>T</sub> ||| AP<sub>IV</sub> | AP<sub>IT</sub> | AP<sub>IVT</sub> |
@@ -229,15 +242,12 @@ CholecT50 | 92.1 | 54.5 | 33.2 ||| 29.7 | 26.4 | 20.0|
 
 <br />
 
-
-#### PyTorch
 | Network   | Base      | Resolution | Dataset   | Data split  |  Link             |
 ------------|-----------|------------|-----------|-------------|-------------------|
 | Tripnet   | ResNet-18 | Low        | CholecT50 | RDV         |   [Google] [Baidu] |
 | Tripnet   | ResNet-18 | High       | CholecT50 | RDV         |   [Google] [Baidu] |
 | Tripnet   | ResNet-18 | Low        | CholecT50 | Challenge   |   [Google] [Baidu] |
 
-<br />
 
 
 # V. References
