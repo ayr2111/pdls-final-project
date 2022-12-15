@@ -237,7 +237,19 @@ We also reduced the number of videos from 50 to 10 for the hyperparameter sweep 
 The hyperparameter sweep results can be found here on W&B: https://wandb.ai/skyler-szot/uncategorized?workspace=user-skylers27
 
 <div align="center">
-<img src="./img_src/instrument.png" width="400">
+<img src="./img_src/sweep_table.png" width="800">
+</div>
+<div align="center">
+<img src="./img_src/sweep_i.png" width="400">
+</div>
+<div align="center">
+<img src="./img_src/sweep_v.png" width="400">
+</div>
+<div align="center">
+<img src="./img_src/sweep_t.png" width="400">
+</div>
+<div align="center">
+<img src="./img_src/sweep_ivt.png" width="400">
 </div>
 
 #### Transfer Learning
