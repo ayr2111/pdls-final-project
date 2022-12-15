@@ -240,17 +240,19 @@ The hyperparameter sweep results can be found here on W&B: https://wandb.ai/skyl
 <img src="./img_src/sweep_table.PNG" width="800">
 </div>
 <div align="center">
-<img src="./img_src/sweep_i.PNG" width="400">
+<img src="./img_src/sweep_i.PNG" width="800">
 </div>
 <div align="center">
-<img src="./img_src/sweep_v.PNG" width="400">
+<img src="./img_src/sweep_v.PNG" width="800">
 </div>
 <div align="center">
-<img src="./img_src/sweep_t.PNG" width="400">
+<img src="./img_src/sweep_t.PNG" width="800">
 </div>
 <div align="center">
-<img src="./img_src/sweep_ivt.PNG" width="400">
+<img src="./img_src/sweep_ivt.PNG" width="800">
 </div>
+
+The first interesting finding from the hyperparameter sweep was that batch sizes of 512 and 1024 were actually too large for the V100 GPU memory and caused it to crash. This reduced our successful runs in the sweep to 11. The second finding was that learning rate was very important in acheiving a low loss for this particular problem. The highest learning rate tested of 0.1 had the best performance, followed by 0.01, and 0.001 had the worst performance. We suspect this behavior was from using just 10 epochs, making a higher learning rate advantageous. The third finding was that data augmentation was also beneficial. This makes sense because we reduced the total number of videos to just 10, so data augmentation should provide better model generalization.
 
 #### Transfer Learning
 
