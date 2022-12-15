@@ -216,65 +216,23 @@ Experiment started ...
 
 #### Feature Extraction Comparison
 
-- Table of IVT Metrics from csv
-- Charts of IVT metrics from csv
+<div align="center">
+<img src="./img_src/ivt_metric_accuracy_per_model_bar_plot.png" width="800">
+</div>
+
+<div align="center">
+<img src="./img_src/classification_accuracy_models_vs_parameters.png" width="100%">
+</div>
+
 - CAM maps across different models for same image/class
 
 #### Model Characterization
 
-We characterized the performance of the tripnet model across different deep learning configurations, leveraging the MLOps platform Weights and Biases. We conducted a  hyperparameter sweep for 10 epochs across 18 random combinations of the following:
+- weights and balances characterization figures
 
-- Batch Size: {64, 128, 256, 512, 1024}
-- Image Augmentation: {[Original], [Original, Vertical Flip, Horizontal Flip, Contrast, 90-degree Rotation]}
-- Learning Rate: {[0.1, 0.1, 0.1], [0.01, 0.01, 0.01], [0.001, 0.001, 0.001]}
+#### Transfer Learning GI Surgery Data to Gallbladder Surgery Data
 
-- Batch size indicates the number of samples to propogate through the network.
-- Image augmentation indicates the data augmentations to be applied to each sample. This was configured as a binary setting of data augmentation or no data augmentation. The data augmentations used were Vertical Flip, Horizontal Flip, Contrast, and 90-degree Rotation. It is also possible to use any combination of these augmentations, but this was done for simplicity. 
-- Learning rate indicates the step size of each weight update. The learning rates are shown as triplets, because there is a separate learning rate for instrument, verb, and target. It is possible to have a different learning rate for each, but they were kept the same for simplicity.
-
-We also reduced the number of videos from 50 to 10 for the hyperparameter sweep to minimize training time and cost. When using the entire dataset of 50 videos, a single epoch takes ~12 minutes on a V100 GPU. Conducting a sweep of 18 combinations with 10 epoch each would take ~36 hours on a V100 GPU, which was too long for the scope of this project.
-
-The hyperparameter sweep results can be found here on W&B: https://wandb.ai/skyler-szot/uncategorized?workspace=user-skylers27
-
-<div align="center">
-<img src="./img_src/sweep_table.PNG" width="800">
-</div>
-<div align="center">
-<img src="./img_src/sweep_i.PNG" width="800">
-</div>
-<div align="center">
-<img src="./img_src/sweep_v.PNG" width="800">
-</div>
-<div align="center">
-<img src="./img_src/sweep_t.PNG" width="800">
-</div>
-<div align="center">
-<img src="./img_src/sweep_ivt.PNG" width="800">
-</div>
-
-The first interesting finding from the hyperparameter sweep was that batch sizes of 512 and 1024 were actually too large for the V100 GPU memory and caused it to crash. This reduced our successful runs in the sweep to 11. The second finding was that learning rate was very important in acheiving a low loss for this particular problem. The highest learning rate tested of 0.1 had the best performance, followed by 0.01, and 0.001 had the worst performance. We suspect this behavior was from using just 10 epochs, making a higher learning rate advantageous. The third finding was that data augmentation was also beneficial. This makes sense because we reduced the total number of videos to just 10, so data augmentation should provide better model generalization.
-
-#### Transfer Learning
-
-A key part of the tripnet model training is the ResNet feature extractor. The feature extraction layer is responsible for extracting high and low level features from each input image from a surgical video. These features are utilized in the tripnet model for instrument, verb, and target classification. One possibility to improve the models accuracy and convergence is transfer learning. Rather than training the ResNet feature extractor from scratch, it is possible to initialize with pretrained weights that share some high-level features with the target dataset (CholecT45). We utilized the ImageNet-1K pretrained weights as the starting point for our transfer learning task with a ResNet-18 feature extractor. ImageNet is a dataset containing more than 14M images and 22K categories, while ImageNet-1K contains the same 14M images, but is reduced to just 1K high-level categories. We hoped that the ImageNet-1K dataset would share many of the same high level features as the CholecT45 dataset, and might provide an improvement in convergence and accuracy.
-
-We investigated two identical training schemes using the default hyperparameters for 15 epochs, changing only the ResNet-18 feature extractor pretraining. We recorded the loss for instrument, verb, and target individually, as well as the IVT triplet loss. The results are shown below:
-
-<div align="center">
-<img src="./img_src/instrument.png" width="400">
-</div>
-<div align="center">
-<img src="./img_src/verb.png" width="400">
-</div>
-<div align="center">
-<img src="./img_src/target.png" width="400">
-</div>
-
-<div align="center">
-<img src="./img_src/ivt.png" width="400">
-</div>
-
-As we can see in the graphs above, pretraining provided significant improvement for all three classification tasks individually, reaching a lower loss in all cases. This means that the ImageNet-1K pretrained weights provided useful high level features as a basis for fine-tuning on the individual tasks. However, there appears to be little improvement in the loss for IVT triplet classification as a result of pretraining. Correctly identifying a triplet of instrument, verb, and target is a much more complex task, and the ImageNet-1K pretraining provided no improvement.
+- TBD
 
 #### Class Activation Mapping
 
