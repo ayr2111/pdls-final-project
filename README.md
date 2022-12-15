@@ -222,11 +222,29 @@ Experiment started ...
 
 #### Model Characterization
 
-- weights and balances characterization figures
+- TODO
 
-#### Transfer Learning GI Surgery Data to Gallbladder Surgery Data
+#### Transfer Learning
 
-- TBD
+A key part of the tripnet model training is the ResNet feature extractor. The feature extraction layer is responsible for extracting high and low level features from each input image from a surgical video. These features are utilized in the tripnet model for instrument, verb, and target classification. One possibility to improve the models accuracy and convergence is transfer learning. Rather than training the ResNet feature extractor from scratch, it is possible to initialize with pretrained weights that share some high-level features with the target dataset (CholecT45). We utilized the ImageNet-1K pretrained weights as the starting point for our transfer learning task with a ResNet-18 feature extractor. ImageNet is a dataset containing more than 14M images and 22K categories, while ImageNet-1K contains the same 14M images, but is reduced to just 1K high-level categories. We hoped that the ImageNet-1K dataset would share many of the same high level features as the CholecT45 dataset, and might provide an improvement in convergence and accuracy.
+
+We investigated two identical training schemes using the default hyperparameters for 15 epochs, changing only the ResNet-18 feature extractor pretraining. We recorded the loss for instrument, verb, and target individually, as well as the IVT triplet loss. The results are shown below:
+
+<div align="center">
+<img src="./img_src/instrument.png" width="400">
+</div>
+<div align="center">
+<img src="./img_src/verb.png" width="400">
+</div>
+<div align="center">
+<img src="./img_src/target.png" width="400">
+</div>
+
+<div align="center">
+<img src="./img_src/instrument.png" width="400">
+</div>
+
+As we can see in the graphs above, pretraining provided significant improvement for all three classification tasks individually, reaching a lower loss in all cases. This means that the ImageNet-1K pretrained weights provided useful high level features as a basis for fine-tuning on the individual tasks. However, there appears to be little improvement in the loss for IVT triplet classification as a result of pretraining. Correctly identifying a triplet of instrument, verb, and target is a much more complex task, and the ImageNet-1K pretraining provided no improvement.
 
 #### Class Activation Mapping
 
