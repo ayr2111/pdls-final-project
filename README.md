@@ -320,7 +320,7 @@ This comparison is done for a larger model, a ResNet-50, and a smaller model, a 
 </div>
 
 
-# V. References
+## V. References
 
 [1] A.P. Twinanda, S. Shehata, D. Mutter, J. Marescaux, M. de Mathelin, N. Padoy, EndoNet: A
 Deep Architecture for Recognition Tasks on Laparoscopic Videos, IEEE Transactions on Medical
