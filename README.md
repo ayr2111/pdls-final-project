@@ -9,10 +9,10 @@
 #### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
 
 <div align="center">
-<img src="./img_src/resnet18_vid04_tissue_input.gif" width="400"> <img src="./img_src/resnet18_vid04_instrument_cam.gif" width="400"> <img src="./img_src/resnet18_vid04_instrument.gif" width="400">
+<img src="./img_src/resnet18_vid04_tissue_input.gif" width="200"> <img src="./img_src/resnet18_vid04_instrument_cam.gif" width="200"> <img src="./img_src/resnet18_vid04_instrument.gif" width="200">
 </div>  
 <div align="center">
-<img src="./img_src/resnet18_vid04_tissue_input.gif" width="400"> <img src="./img_src/resnet18_vid04_tissue_cam.gif" width="400"> <img src="./img_src/resnet18_vid04_tissue.gif" width="400">
+<img src="./img_src/resnet18_vid04_tissue_input.gif" width="200"> <img src="./img_src/resnet18_vid04_tissue_cam.gif" width="200"> <img src="./img_src/resnet18_vid04_tissue.gif" width="200">
 </div>  
 
 ## I. Project Description
@@ -41,7 +41,7 @@ Each video is annotated with an action triplet containing at least one of each o
 
 - **Instruments:** grasper, bipolar, hook, scissors, clipper, irrigator, null_instrument
 - **Verbs:** grasp, retract, dissect, coagulate, clip, cut, aspirate, irrigate, pack, null_verb
-- **Tissues:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
+- **Instruments:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
 
 <div align="center">
 <img src="./img_src/video_frames_example.png" width="800">
@@ -220,7 +220,7 @@ Experiment started ...
 
 ## IV. Results
 
-### Feature Extraction Comparison
+#### Feature Extraction Comparison
 
 
 The feature extractor provides the instrument, verb, tissue, and triplet detectors with features per video frame to process and make classification decisions. Given its importance, the feature extractor is characterized with mutliple models of varying capacities (indicated by number of model parameters in millions). 
@@ -257,7 +257,7 @@ Finally, the tissue class is investigated. There are 15 tissues, making it the c
 <img src="./img_src/classification_accuracy_models_vs_parameters_Tissue.png" width="600">
 </div>
 
-### Model Characterization
+#### Model Characterization
 
 We characterized the performance of the tripnet model across different deep learning configurations, leveraging the MLOps platform Weights and Biases. We conducted a  hyperparameter sweep for 10 epochs across 18 random combinations of the following:
 
@@ -291,7 +291,7 @@ The hyperparameter sweep results can be found here on W&B: https://wandb.ai/skyl
 
 The first interesting finding from the hyperparameter sweep was that batch sizes of 512 and 1024 were actually too large for the V100 GPU memory and caused it to crash. This reduced our successful runs in the sweep to 11. The second finding was that learning rate was very important in acheiving a low loss for this particular problem. The highest learning rate tested of 0.1 had the best performance, followed by 0.01, and 0.001 had the worst performance. We suspect this behavior was from using just 10 epochs, making a higher learning rate advantageous. The third finding was that data augmentation was also beneficial. This makes sense because we reduced the total number of videos to just 10, so data augmentation should provide better model generalization.
 
-### Transfer Learning
+#### Transfer Learning
 
 A key part of the tripnet model training is the ResNet feature extractor. The feature extraction layer is responsible for extracting high and low level features from each input image from a surgical video. These features are utilized in the tripnet model for instrument, verb, and target classification. One possibility to improve the models accuracy and convergence is transfer learning. Rather than training the ResNet feature extractor from scratch, it is possible to initialize with pretrained weights that share some high-level features with the target dataset (CholecT45). We utilized the ImageNet-1K pretrained weights as the starting point for our transfer learning task with a ResNet-18 feature extractor. ImageNet is a dataset containing more than 14M images and 22K categories, while ImageNet-1K contains the same 14M images, but is reduced to just 1K high-level categories. We hoped that the ImageNet-1K dataset would share many of the same high level features as the CholecT45 dataset, and might provide an improvement in convergence and accuracy.
 
@@ -308,7 +308,7 @@ We investigated two identical training schemes using the default hyperparameters
 
 As we can see in the graphs above, pretraining provided significant improvement for all three classification tasks individually, reaching a lower loss in all cases. This means that the ImageNet-1K pretrained weights provided useful high level features as a basis for fine-tuning on the individual tasks. However, there appears to be little improvement in the loss for IVT triplet classification as a result of pretraining. Correctly identifying a triplet of instrument, verb, and target is a much more complex task, and the ImageNet-1K pretraining provided no improvement.
 
-### Class Activation Mapping
+#### Class Activation Mapping
 
 Each class requires a different feature extractor activation. Intuitively, identifying the surgical instrument will require different features than identifying the target tissue. In order to evaluate the models' ability to make decisions with this intuition, the class activation maps for each class type (instrument, verb, tissue) for the same image are compared. It's clear from the comparison with a ResNet-18 below that the model is learning to extract different features for each class type. 
 
@@ -327,7 +327,7 @@ This comparison is done for a larger model, a ResNet-50, and a smaller model, a 
 </div>
 
 
-## V. References
+# V. References
 
 [1] A.P. Twinanda, S. Shehata, D. Mutter, J. Marescaux, M. de Mathelin, N. Padoy, EndoNet: A
 Deep Architecture for Recognition Tasks on Laparoscopic Videos, IEEE Transactions on Medical
