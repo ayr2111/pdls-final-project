@@ -34,7 +34,7 @@ Each video is annotated with an action triplet containing at least one of each o
 
 - **Instruments:** grasper, bipolar, hook, scissors, clipper, irrigator, null_instrument
 - **Verbs:** grasp, retract, dissect, coagulate, clip, cut, aspirate, irrigate, pack, null_verb
-- **Instruments:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
+- **Tissues:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
 
 <div align="center">
 <img src="./img_src/video_frames_example.png" width="800">
