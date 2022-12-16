@@ -298,7 +298,7 @@ def save_cam_figure(feature_conv, h_logit, y, image, img_file, img_index, obj_st
     opencv_image = cv2.imread(img_file)
     height, width, _ = opencv_image.shape
     heatmap = cv2.applyColorMap(cv2.resize(output_cam,(width, height)), cv2.COLORMAP_JET)
-    result = heatmap * 0.3 + opencv_image * 0.5
+    result = heatmap * 0.4 + opencv_image * 0.6
     
     # Annotations
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -374,7 +374,7 @@ def test_loop(dataloader, model, activation, final_eval=False):
                 mAPt.update(y3.float().detach().cpu(), activation(logit_t).detach().cpu()) # Log metrics 
                 
                 # Generate CAM for each I, V, T for sample 300
-                idxs = np.where((img_idx >= 300) & (img_idx <= 302))[0]
+                idxs = np.where((img_idx >= 300) & (img_idx <= 400))[0]
                 if len(idxs) > 0:
                     
                     # Show Results of Images in set

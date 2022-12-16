@@ -8,6 +8,13 @@
 # COMS-6998: Applications of Deep Learning in Surgery
 #### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
 
+<div align="center">
+<img src="./img_src/resnet18_vid04_tissue_input.gif" width="400"> <img src="./img_src/resnet18_vid04_instrument_cam.gif" width="400"> <img src="./img_src/resnet18_vid04_instrument.gif" width="400">
+</div>  
+<div align="center">
+<img src="./img_src/resnet18_vid04_tissue_input.gif" width="400"> <img src="./img_src/resnet18_vid04_tissue_cam.gif" width="400"> <img src="./img_src/resnet18_vid04_tissue.gif" width="400">
+</div>  
+
 ## I. Project Description
 
 Recent advances in minimally invasive surgery have yielded 
