@@ -67,13 +67,12 @@ There we evaluate architecture configurations with the best evaluation accuracie
 
 #### Thrust 3: Transfer Learning
 
-Next, we implement a transfer learning method using a non-gallbladder tissue dataset, the 
-gastrointestinal dataset [3], to pretrain the TripNet spatial feature extractor and
+Next, we implement a transfer learning method using a non-gallbladder tissue dataset such as ImageNet-1k [3], to pretrain the TripNet spatial feature extractor and
 evaluate the change in performance for gallbladder surgical videos similar to [4]. 
 
 <div align="center">
-<a href="https://www.nature.com/articles/s41597-020-00622-y/figures/1">
-<img src="./img_src/gi_tract.png" width="500">
+<a href="https://www.researchgate.net/figure/Visual-examples-of-the-ImageNet-1K_fig6_357652410">
+<img src="./img_src/imagenet1k.PNG" width="600">
 </a>
 </div>
 
@@ -216,16 +215,39 @@ Experiment started ...
 
 #### Feature Extraction Comparison
 
-- Table of IVT Metrics from csv
-- Charts of IVT metrics from csv
-- CAM maps across different models for same image/class
+
+The feature extractor provides the instrument, verb, tissue, and triplet detectors with features per video frame to process and make classification decisions. Given its importance, the feature extractor is characterized with mutliple models of varying capacities (indicated by number of model parameters in millions). 
+
+- [ResNet-50](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html#torchvision.models.resnet50) (25.6M)
+- [ResNet-34](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html#torchvision.models.resnet34) (21.8M)
+- [ResNet-18](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html#torchvision.models.resnet18) (11.7M)
+- [ShuffleNet_V2_x1_5](https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x0_5.html#torchvision.models.shufflenet_v2_x1_5) (3.5M)
+- [ShuffleNet_V2_x1_0](https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x1_0.html#torchvision.models.shufflenet_v2_x1_0) (2.3M)
+- [ShuffleNet_V2_x0_5](https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x0_5.html#torchvision.models.shufflenet_v2_x0_5) (1.4M)
+- [SqueezeNet1_0](https://pytorch.org/vision/stable/models/generated/torchvision.models.squeezenet1_0.html#torchvision.models.squeezenet1_0) (1.2M)
+
+Each model uses pretrained weights from ImageNet-1K to expedite the learning processing. The experiment to compare the models was setup as follows. The 16 videos from the CholecT45 dataset were used to train the model with the pretrained network for 10 epochs. The training procedure used a batch size of 64 and a learning rate of 0.01. After training, the model was evaluated on 4 unseen videos from CholecT45. The entire experiment was done on a V100 GPU, and the training and evaluation across all models took 12 hours to complete. After evaluating each model on the same 4 videos, the mean accuracy for each IVT category was evaluated per model for comparison. Recall that the IVT metrics are: instrument (I), verb (V), tissue (T), instrument-verb (IV), instrument-tissue (IT), instrument-verb-tissue (IVT). While the accuracies become low, these are modest relative to the number of combinations e.g., a random guess would provide 1.5% accuracy. 
 
 <div align="center">
 <img src="./img_src/ivt_metric_accuracy_per_model_bar_plot.png" width="800">
 </div>
 
+Taking a closer look at the individual tools, actions, and tissue classification accuracies reveals discrepancies in classification ability. For example, the hook and grasper tools are correctly classified with greater than 90% accuracy in almost all cases, while the scissors are correctly classified only 20-50% of the time. This plot also shows the models via number of parameters, revealing that the more compact networks can achieve similar classification accuracies with less than 10% as many trainable parameters for some instruments. However, some tools like the scissors and irrigator are classified about 20% worse by the ShuffleNet networks than the ResNet networks. Unsurprisingly, the distribution of instrument examples in the videos correlates positively to the classification accuracy. For example, there are 90,969 grasper video frames and 2,135 scissors video frames in the entire dataset. This in large part explains why the grasper classification accuracy is much higher than the scissors classification accuracy. 
+
 <div align="center">
-<img src="./img_src/classification_accuracy_models_vs_parameters.png" width="100%">
+<img src="./img_src/classification_accuracy_models_vs_parameters_Instrument.png" width="600">
+</div>
+
+A similar trend persists from the instrument classification to the verb classification; some verbs like retract and dissect have greater than 80% accuracy in almost all cases, but other actions like irrigate and asipirate have less than 20% accuracy in most cases. Moreover, the distribution of actions in the dataset correlates positively to the classification accuracy. For example, the entire dataset has 49,247 dissect video frames and 572 irrigate video frames. This in part explains the discrepancy in classification accuracy between the two classes.
+
+<div align="center">
+<img src="./img_src/classification_accuracy_models_vs_parameters_Verb.png" width="600">
+</div>
+
+Finally, the tissue class is investigated. There are 15 tissues, making it the class with the most labels. Like before, there are 87,808 gallbladder video frames and 1,227 peritoneum frames, explaining why the former has a classification accuracy greater than 80% in most cases and why the latter is near 0% in most cases.
+
+<div align="center">
+<img src="./img_src/classification_accuracy_models_vs_parameters_Tissue.png" width="600">
 </div>
 
 #### Model Characterization
@@ -297,23 +319,6 @@ This comparison is done for a larger model, a ResNet-50, and a smaller model, a 
 <img src="./img_src/class_cam_comparison_vid04_frame300_squeezenet0.png" width="800">
 </div>
 
-#### Example Tables
-Dataset ||Components AP ||||| Association AP |||
-:---:|:---:|:---:|:---: |:---:|:---:|:---:|:---:|:---:|:---:|
-.. | AP<sub>I</sub> | AP<sub>V</sub> | AP<sub>T</sub> ||| AP<sub>IV</sub> | AP<sub>IT</sub> | AP<sub>IVT</sub> |
-CholecT40 | 89.7 | 60.7 | 38.3 ||| 35.5 | 19.9 | 19.0|
-CholecT45 | 89.9 | 59.9 | 37.4 ||| 31.8 | 27.1 | 24.4|
-CholecT50 | 92.1 | 54.5 | 33.2 ||| 29.7 | 26.4 | 20.0|
-
-<br />
-
-| Network   | Base      | Resolution | Dataset   | Data split  |  Link             |
-------------|-----------|------------|-----------|-------------|-------------------|
-| Tripnet   | ResNet-18 | Low        | CholecT50 | RDV         |   [Google] [Baidu] |
-| Tripnet   | ResNet-18 | High       | CholecT50 | RDV         |   [Google] [Baidu] |
-| Tripnet   | ResNet-18 | Low        | CholecT50 | Challenge   |   [Google] [Baidu] |
-
-
 
 # V. References
 
@@ -325,8 +330,7 @@ Imaging (TMI), arXiv preprint, 2017
 videos via action triplets." International Conference on Medical Image Computing and
 Computer-Assisted Intervention. Springer, Cham, 2020.
 
-[3] Borgli, Hanna, et al. "HyperKvasir, a comprehensive multi-class image and video dataset for
-gastrointestinal endoscopy." Scientific data 7.1 (2020): 1-14.
+[3] Russakovsky, Olga, et al. "Imagenet large scale visual recognition challenge." International journal of computer vision 115.3 (2015): 211-252.
 
 [4] Christodoulidis, Stergios, et al. "Multisource transfer learning with convolutional neural
 networks for lung pattern analysis." IEEE journal of biomedical and health informatics 21.1
